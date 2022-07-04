@@ -1,0 +1,14 @@
+{
+  "_output_dir": "D:\\Czarified\\Documents\\PythonScripts",
+  "_template": "cookiecutter-hypermodern-python",
+  "author": "Benjamin Crews",
+  "copyright_year": "2022",
+  "development_status": "Development Status :: 1 - Planning",
+  "email": "aceF22@gmail.com",
+  "friendly_name": "Thymed",
+  "github_user": "czarified",
+  "license": "MIT",
+  "package_name": "thymed",
+  "project_name": "thymed",
+  "version": "0.0.0"
+}
