@@ -1,0 +1,13 @@
+## Config file for Thyme
+
+title = "Thyme Config"
+
+[author]
+name = "Benjamin Crews"
+
+
+[user]
+name = "Benjamin Crews"
+
+[database]
+file = "C:/Users/Czarified/Downloads/thyme.json"
