@@ -11,7 +11,8 @@ from copy import copy
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
-from typing import Any, List
+from typing import Any
+from typing import List
 from typing import Tuple
 
 import toml
@@ -55,7 +56,7 @@ class ChargeCode:
     description: str
     id: int
 
-    times: List[Tuple[dt.datetime,dt.datetime,],] = field(default_factory=list)
+    times: List[Tuple[dt.datetime, dt.datetime]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Stuff to do right after instantiation.
@@ -99,7 +100,7 @@ class ChargeCode:
             # Open the code.
             self.times.append((dt.datetime.now(),))
 
-    def write_json(self, data: Path=_DATA, log: bool = False) -> None:
+    def write_json(self, data: Path = _DATA, log: bool = False) -> None:
         """Write the times data to a json file.
 
         Read the file first, then append the times to their
