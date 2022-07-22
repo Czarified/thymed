@@ -11,7 +11,7 @@ from copy import copy
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
-from typing import List
+from typing import Any, List
 from typing import Tuple
 
 import toml
@@ -55,9 +55,9 @@ class ChargeCode:
     description: str
     id: int
 
-    times: List[Tuple] = field(default_factory=list)
+    times: List[Tuple[dt.datetime,dt.datetime,],] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Stuff to do right after instantiation.
 
         Upon instantiation, need to look for existing data, and read in
@@ -81,7 +81,7 @@ class ChargeCode:
             raise e
 
     @property
-    def is_active(self) -> bool:
+    def is_active(self) -> Any[bool, None]:
         """The charge code is active if it has been initalized, but not closed."""
         # If the last item in the times list has only 1 entry,
         # we assume the code is still active.
@@ -90,7 +90,7 @@ class ChargeCode:
 
         return True if len(self.times[-1]) == 1 else False
 
-    def punch(self):
+    def punch(self) -> None:
         """Punch in/out of chargeable time."""
         if self.is_active:
             # Close the code.
@@ -99,7 +99,7 @@ class ChargeCode:
             # Open the code.
             self.times.append((dt.datetime.now(),))
 
-    def write_json(self, data=_DATA, log: bool = False):
+    def write_json(self, data: Path=_DATA, log: bool = False) -> None:
         """Write the times data to a json file.
 
         Read the file first, then append the times to their
@@ -153,7 +153,7 @@ class TimeCard:
 
     pass
 
-    def weekly_report(self):
+    def weekly_report(self) -> None:
         """Generates a report of all activity."""
         pass
 
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     # Create a new charge_code
     my_code = ChargeCode("Testing Thyme", "Testing charge code for Thyme.", 100)
     your_code = ChargeCode("Running Thyme", "Run run run.", 200)
-    data = {}
+    data: Any = {}
 
     my_code.punch()
 
