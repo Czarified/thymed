@@ -50,10 +50,14 @@ def punch_default() -> None:
     Punches the current time. Write the data and the code,
     then exit.
     """
+    console = Console()
+    console.print("[spring_green3 italic]Thymed.[/]\n")
     code = default_code()
+    console.print(f"Punching Charge Code: [medium_spring_green]{code.name}")
     code.punch()
     code.write_class()
     code.write_json()
+    console.print(f"[spring_green3 italic]   ...Done!")
 
 
 if __name__ == "__main__":
