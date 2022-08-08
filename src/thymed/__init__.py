@@ -183,8 +183,8 @@ class ChargeCode:
         out = copy(self.__dict__)
         out['__type__'] = 'ChargeCode'
         del out['times']
-        final_data = {self.id:out}
         
+        # Read the stored data
         with open(_CHARGES) as f:
             try:
                 codes = json.load(f)
@@ -192,12 +192,19 @@ class ChargeCode:
                 # If the file is completely blank, we will get an error
                 codes = dict()
 
-
-        with open(_CHARGES, 'a+') as f:
-            print(self.id)
-            print(codes.keys())
+        # We're going to write new data
+        with open(_CHARGES, 'w') as f:
+            # If the current code is not in the keys
             if not str(self.id) in codes.keys():
-                _ = f.write(json.dumps(final_data, indent=2))
+                # We can create a new entry for it
+                codes[self.id] = out
+            else:
+                # A ChargeCode with the id already exists
+                # TODO: prompt user and ask for overwrite
+                pass
+
+            # Write the exact data to file
+            _ = f.write(json.dumps(codes, indent=2))
 
 
 @dataclass
@@ -213,6 +220,16 @@ class TimeCard:
 
 # Functions
 
+def object_decoder(obj) -> Any:
+    """Decoder hook for the ChargeCode class."""
+    if '__type__' in obj and obj['__type__'] == 'ChargeCode':
+            return ChargeCode(
+                obj['name'], 
+                obj['description'], 
+                obj['id']
+            )
+    return obj
+
 # TODO: Function to update _DATA global variable.
 #       This function should be available in the CLI,
 #       prompt to make the new file if non-existent,
@@ -225,9 +242,16 @@ if __name__ == "__main__":
 
     console = Console(record=True)
     # Create a new charge_code
-    my_code = ChargeCode("Testing Thyme", "Testing charge code for Thyme.", 100)
+    # my_code = ChargeCode("Testing Thyme", "Testing charge code for Thyme.", 100)
+    with open(_CHARGES) as f:
+        codes = json.load(f, object_hook=object_decoder)
+    
+    my_code = codes['100']
+    print(my_code)
+
     # my_code.write_class()
     your_code = ChargeCode("Running Thyme", "Run run run.", 200)
+    your_code.write_class()
 
     my_code.write_class()
     my_code.punch()
