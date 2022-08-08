@@ -15,6 +15,8 @@ from typing import Any
 from typing import List
 from typing import Tuple
 
+from rich.console import Console
+
 import toml
 
 
@@ -37,7 +39,7 @@ if not __DIR.exists():
         data = "{__DIR/'thymed_punches.dat'}"
 
         # Where all charge code objects are recorded
-        charges = "{__DIR/'thymed_codes.dat'}"
+        charges = "{__DIR/'thymed_codes.json'}"
     """
     parsed_toml = toml.loads(default_config)
     with open(__CONFIG, 'w') as f:
@@ -58,6 +60,8 @@ if not _DATA.exists():
 
 if not _CHARGES.exists():
     _CHARGES.touch()
+
+
 
 # Classes
 
