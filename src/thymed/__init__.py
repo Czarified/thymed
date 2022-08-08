@@ -25,13 +25,39 @@ import toml
 __DIR = Path.home() / Path(".thymed")
 __CONFIG = __DIR / Path("config.toml")
 
+if not __DIR.exists():
+    # This is the first time a user has run Thymed.
+    __DIR.mkdir()
+    __CONFIG.touch()
+    default_config = f"""
+        title = "Thymed Config"
+
+        [database]
+        # Where all charging punches are recorded
+        data = "{__DIR/'thymed_punches.dat'}"
+
+        # Where all charge code objects are recorded
+        charges = "{__DIR/'thymed_codes.dat'}"
+    """
+    parsed_toml = toml.loads(default_config)
+    with open(__CONFIG, 'w') as f:
+        _ = toml.dump(parsed_toml, f)
+
+
 with open(__CONFIG) as f:
     __OPTIONS = toml.load(f)
 
 # The data file to store information.
 # Controlled in the CONFIG file, and therefore customizable by user
-_DATA = __DIR / Path(__OPTIONS["database"]["file"])
+_DATA = Path(__OPTIONS["database"]["data"])
+_CHARGES = Path(__OPTIONS["database"]["charges"])
 
+# If the datafiles don't exist, we need to make them
+if not _DATA.exists():
+    _DATA.touch()
+
+if not _CHARGES.exists():
+    _CHARGES.touch()
 
 # Classes
 
@@ -68,21 +94,26 @@ class ChargeCode:
         try:
             with open(_DATA) as infile:
                 # Read the existing file and store it
-                existing = json.load(infile)
-                # Keys read from the JSON will be str. Convert to int
-                keys = [int(key) for key in existing.keys()]
-                # However, keys in the final are still str, so use an fstring
-                if self.id in keys:
-                    str_times = existing[f"{self.id}"]
-                    for entry in str_times:
-                        self.times.append(
-                            tuple(dt.datetime.fromisoformat(time) for time in entry)
-                        )
+                try:
+                    existing = json.load(infile)
+                    # Keys read from the JSON will be str. Convert to int
+                    keys = [int(key) for key in existing.keys()]
+                    # However, keys in the final are still str, so use an fstring
+                    if self.id in keys:
+                        str_times = existing[f"{self.id}"]
+                        for entry in str_times:
+                            self.times.append(
+                                tuple(dt.datetime.fromisoformat(time) for time in entry)
+                            )
+                except json.JSONDecodeError:
+                    # If the file is completely blank, we will get an error
+                    pass
         except Exception as e:
+            # Otherwise, let me know what went wrong
             raise e
 
     @property
-    def is_active(self) -> Any[bool, None]:
+    def is_active(self) -> Any:
         """The charge code is active if it has been initalized, but not closed."""
         # If the last item in the times list has only 1 entry,
         # we assume the code is still active.
@@ -90,6 +121,7 @@ class ChargeCode:
             return None
 
         return True if len(self.times[-1]) == 1 else False
+
 
     def punch(self) -> None:
         """Punch in/out of chargeable time."""
@@ -99,6 +131,7 @@ class ChargeCode:
         else:
             # Open the code.
             self.times.append((dt.datetime.now(),))
+
 
     def write_json(self, data: Path = _DATA, log: bool = False) -> None:
         """Write the times data to a json file.
@@ -120,19 +153,16 @@ class ChargeCode:
                 # Read the existing file and store it
                 existing = json.load(infile)
                 # # Make a copy, just for clarity
+                # We need the copy to carry all the data which does not pertain
+                # to the current specific ChargeCode.
                 final_data = copy(existing)
-                # # Keys read from the JSON will be str. Convert to int
-                # keys = [int(key) for key in existing.keys()]
-                # # However, keys in the final are still str, so use an fstring
-                # if self.id in keys:
-                #     final_data[f'{self.id}'].extend(_times)
-                # else:
-                #     final_data[f'{self.id}'] = _times
+                # We overwrite data directly here, because the post_init method
+                # reads the same file.
                 final_data[f"{self.id}"] = _times
         except json.JSONDecodeError:
             # Unless we can't read the file
             console.log("[red]Got JSONDecodeError, assuming the file was blank...")
-            final_data = _times
+            final_data = {self.id:_times}
 
         # Serializing json
         if log:
@@ -146,6 +176,28 @@ class ChargeCode:
             if log:
                 console.print("Writing JSON data to file...")
             outfile.write(json_object)
+
+    
+    def write_class(self) -> None:
+        """Write the class to the Charges json file."""
+        out = copy(self.__dict__)
+        out['__type__'] = 'ChargeCode'
+        del out['times']
+        final_data = {self.id:out}
+        
+        with open(_CHARGES) as f:
+            try:
+                codes = json.load(f)
+            except json.JSONDecodeError as e:
+                # If the file is completely blank, we will get an error
+                codes = dict()
+
+
+        with open(_CHARGES, 'a+') as f:
+            print(self.id)
+            print(codes.keys())
+            if not str(self.id) in codes.keys():
+                _ = f.write(json.dumps(final_data, indent=2))
 
 
 @dataclass
@@ -174,9 +226,10 @@ if __name__ == "__main__":
     console = Console(record=True)
     # Create a new charge_code
     my_code = ChargeCode("Testing Thyme", "Testing charge code for Thyme.", 100)
+    # my_code.write_class()
     your_code = ChargeCode("Running Thyme", "Run run run.", 200)
-    data: Any = {}
 
+    my_code.write_class()
     my_code.punch()
 
     my_code.write_json()
