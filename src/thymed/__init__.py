@@ -30,15 +30,17 @@ if not __DIR.exists():
     # This is the first time a user has run Thymed.
     __DIR.mkdir()
     __CONFIG.touch()
+    PUNCHFILE = Path(__DIR / "thymed_punches.dat")
+    CHARGEFILE = Path(__DIR / "thymed_codes.json")
     default_config = f"""
         title = "Thymed Config"
 
         [database]
         # Where all charging punches are recorded
-        data = "{__DIR/'thymed_punches.dat'}"
+        data = "{PUNCHFILE.as_posix()}"
 
         # Where all charge code objects are recorded
-        charges = "{__DIR/'thymed_codes.json'}"
+        charges = "{CHARGEFILE.as_posix()}"
     """
     parsed_toml = toml.loads(default_config)
     with open(__CONFIG, "w") as f:
