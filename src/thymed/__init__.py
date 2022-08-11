@@ -187,7 +187,7 @@ class ChargeCode:
         with open(_CHARGES) as f:
             try:
                 codes = json.load(f)
-            except json.JSONDecodeError as e:
+            except json.JSONDecodeError:
                 # If the file is completely blank, we will get an error
                 codes = dict()
 
@@ -235,8 +235,6 @@ def object_decoder(obj) -> Any:
 
 if __name__ == "__main__":
     # # Scratchpad
-    from rich.console import Console
-
     console = Console(record=True)
     # Create a new charge_code
     # my_code = ChargeCode("Testing Thyme", "Testing charge code for Thyme.", 100)

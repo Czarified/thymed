@@ -61,7 +61,7 @@ def punch_default() -> None:
     code.punch()
     code.write_class()
     code.write_json()
-    console.print(f"[spring_green3 italic]   ...Done!")
+    console.print("[spring_green3 italic]   ...Done!")
 
 
 if __name__ == "__main__":
