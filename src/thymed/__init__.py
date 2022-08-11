@@ -15,9 +15,8 @@ from typing import Any
 from typing import List
 from typing import Tuple
 
-from rich.console import Console
-
 import toml
+from rich.console import Console
 
 
 # CONSTANTS
@@ -42,7 +41,7 @@ if not __DIR.exists():
         charges = "{__DIR/'thymed_codes.json'}"
     """
     parsed_toml = toml.loads(default_config)
-    with open(__CONFIG, 'w') as f:
+    with open(__CONFIG, "w") as f:
         _ = toml.dump(parsed_toml, f)
 
 
@@ -60,7 +59,6 @@ if not _DATA.exists():
 
 if not _CHARGES.exists():
     _CHARGES.touch()
-
 
 
 # Classes
@@ -126,7 +124,6 @@ class ChargeCode:
 
         return True if len(self.times[-1]) == 1 else False
 
-
     def punch(self) -> None:
         """Punch in/out of chargeable time."""
         if self.is_active:
@@ -135,7 +132,6 @@ class ChargeCode:
         else:
             # Open the code.
             self.times.append((dt.datetime.now(),))
-
 
     def write_json(self, data: Path = _DATA, log: bool = False) -> None:
         """Write the times data to a json file.
@@ -166,7 +162,7 @@ class ChargeCode:
         except json.JSONDecodeError:
             # Unless we can't read the file
             console.log("[red]Got JSONDecodeError, assuming the file was blank...")
-            final_data = {self.id:_times}
+            final_data = {self.id: _times}
 
         # Serializing json
         if log:
@@ -181,13 +177,12 @@ class ChargeCode:
                 console.print("Writing JSON data to file...")
             outfile.write(json_object)
 
-    
     def write_class(self) -> None:
         """Write the class to the Charges json file."""
         out = copy(self.__dict__)
-        out['__type__'] = 'ChargeCode'
-        del out['times']
-        
+        out["__type__"] = "ChargeCode"
+        del out["times"]
+
         # Read the stored data
         with open(_CHARGES) as f:
             try:
@@ -197,7 +192,7 @@ class ChargeCode:
                 codes = dict()
 
         # We're going to write new data
-        with open(_CHARGES, 'w') as f:
+        with open(_CHARGES, "w") as f:
             # If the current code is not in the keys
             if not str(self.id) in codes.keys():
                 # We can create a new entry for it
@@ -224,15 +219,13 @@ class TimeCard:
 
 # Functions
 
+
 def object_decoder(obj) -> Any:
     """Decoder hook for the ChargeCode class."""
-    if '__type__' in obj and obj['__type__'] == 'ChargeCode':
-            return ChargeCode(
-                obj['name'], 
-                obj['description'], 
-                obj['id']
-            )
+    if "__type__" in obj and obj["__type__"] == "ChargeCode":
+        return ChargeCode(obj["name"], obj["description"], obj["id"])
     return obj
+
 
 # TODO: Function to update _DATA global variable.
 #       This function should be available in the CLI,
@@ -249,8 +242,8 @@ if __name__ == "__main__":
     # my_code = ChargeCode("Testing Thyme", "Testing charge code for Thyme.", 100)
     with open(_CHARGES) as f:
         codes = json.load(f, object_hook=object_decoder)
-    
-    my_code = codes['100']
+
+    my_code = codes["100"]
     print(my_code)
 
     # my_code.write_class()

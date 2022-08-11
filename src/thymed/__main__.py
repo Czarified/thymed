@@ -1,26 +1,30 @@
 """Command-line interface."""
-import thymed
-import click
+import importlib.metadata
 import json
 
+import click
 from rich.console import Console
+
+import thymed
+
+
+__version__ = importlib.metadata.version("thymed")
 
 
 @click.command()
 @click.version_option()
 def main() -> None:
     """Thymed.
-    
+
     This function will be used to execute the TUI.
     For now, it's just a placeholder.
     """
     console = Console()
     console.print("Hello World!\n")
     console.print(
-        "I am [spring_green3 italic]Thymed.[/] "
-        "Simple command-line time-tracking."
+        "I am [spring_green3 italic]Thymed.[/] " "Simple command-line time-tracking."
     )
-    console.print(f"Current Version: 0.0.1\n")
+    console.print(f"Current Version: {__version__}\n")
     console.print(
         "Currently, this is a placeholder tool. "
         "Functionality exists in the API, but "
@@ -29,18 +33,18 @@ def main() -> None:
 
 
 def default_code() -> thymed.ChargeCode:
-    '''This function returns the default ChargeCode.
-    
+    """This function returns the default ChargeCode.
+
     The default ChargeCode is defined in the Thymed config file.
     If no default id is defined, raises an error.
-    '''
+    """
     with open(thymed._CHARGES) as f:
         codes = json.load(f, object_hook=thymed.object_decoder)
 
-    default_id = thymed.__OPTIONS['database']['default']
+    default_id = thymed.__OPTIONS["database"]["default"]
 
     return codes[str(default_id)]
-    
+
 
 @click.command()
 def punch_default() -> None:
