@@ -3,15 +3,18 @@ import importlib.metadata
 import json
 
 import click
-
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Prompt, IntPrompt, Confirm
+from rich.prompt import Confirm
+from rich.prompt import IntPrompt
+from rich.prompt import Prompt
 from rich.table import Table
 from rich.traceback import install
-install()
 
 import thymed
+
+
+install()
 
 
 __version__ = importlib.metadata.version("thymed")
@@ -28,7 +31,7 @@ def main() -> None:
     For more information, try: thymed hello
     """
     pass
-    
+
 
 @main.command()
 def hello():
@@ -68,26 +71,33 @@ def default_code() -> thymed.ChargeCode:
             "Try providing the specific code you want to punch in, "
             "or set the default code for future with: `thymed set default <id>`"
         )
-        console.print(Panel(text, title='[magenta]No Default Found', width=100, style='spring_green1'))
+        console.print(
+            Panel(
+                text,
+                title="[magenta]No Default Found",
+                width=100,
+                style="spring_green1",
+            )
+        )
 
 
 @main.command()
-@click.argument('id', nargs=-1)
+@click.argument("id", nargs=-1)
 def punch(id) -> None:
     """Punch a ChargeCode.
 
     Punch the ChargeCode id provided.
-    
-    If no id provided, grab the default code, 
+
+    If no id provided, grab the default code,
     and call its `punch` method.
-    
+
     Punches the current time. Write the data and the code,
     then exit.
     """
     # Manually check some argument varialbes...
-    if len(id)>1:
+    if len(id) > 1:
         raise NotImplementedError
-    elif len(id)==1:
+    elif len(id) == 1:
         id = id[0]
 
     console = Console()
@@ -105,13 +115,20 @@ def punch(id) -> None:
             code = codes[id]
         except KeyError:
             text = (
-            f"Cannot find the charge code with id: {id}\n"
-            "Try viewing available charge codes with `thymed list` or "
-            "try punching the default code with `thymed punch`"
+                f"Cannot find the charge code with id: {id}\n"
+                "Try viewing available charge codes with `thymed list` or "
+                "try punching the default code with `thymed punch`"
             )
-            console.print(Panel(text, title='[magenta]Code Not Found', width=100, style='spring_green1'))
+            console.print(
+                Panel(
+                    text,
+                    title="[magenta]Code Not Found",
+                    width=100,
+                    style="spring_green1",
+                )
+            )
             code = None
-    if code == None:
+    if code is None:
         # code is None if the default code was not found, nor was it provided
         console.print("No code to punch, so exiting...")
         return None
@@ -136,7 +153,9 @@ def create():
 
     new_code = thymed.ChargeCode(name, description, id)
     console.print(new_code)
-    confirmed = Confirm.ask("Confirm ChargeCode data? (If no, you will exit with no changes)")
+    confirmed = Confirm.ask(
+        "Confirm ChargeCode data? (If no, you will exit with no changes)"
+    )
 
     if confirmed:
         new_code.write_class()
@@ -149,8 +168,7 @@ def create():
 
 @main.command()
 def list():
-    """List out all the available charge codes.
-    """
+    """List out all the available charge codes."""
     with open(thymed._CHARGES) as f:
         try:
             codes = json.load(f, object_hook=thymed.object_decoder)
@@ -170,14 +188,10 @@ def list():
     table.add_column("ACTIVE", style="green")
 
     for code in codes:
-        table.add_row(
-            str(code.id), 
-            code.name, 
-            code.description,
-            str(code.is_active)
-        )
+        table.add_row(str(code.id), code.name, code.description, str(code.is_active))
 
     console.print(table)
+
 
 if __name__ == "__main__":
     main(prog_name="thymed")  # pragma: no cover
