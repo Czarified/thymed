@@ -56,6 +56,18 @@ def default_code() -> thymed.ChargeCode:
     If no default id is defined, raises a warning.
     """
     with open(thymed._CHARGES) as f:
+        if len(f.read()) == 0:
+            # If the Charges file is completely blank (fresh install),
+            # It will read with a length of zero. We should skip this
+            # to avoid testing or runtime errors. Notify the user and exit.
+            console = Console()
+            console.print(
+                "Looks like you're trying to punch a ChargeCode "
+                "without first defining any codes! Try running `thymed create` "
+                "first."
+            )
+            return None
+
         codes = json.load(f, object_hook=thymed.object_decoder)
 
     try:
