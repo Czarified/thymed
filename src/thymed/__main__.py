@@ -56,7 +56,8 @@ def default_code() -> thymed.ChargeCode:
     If no default id is defined, raises a warning.
     """
     with open(thymed._CHARGES) as f:
-        if len(f.read()) == 0:
+        check = f.read()
+        if len(check) == 0 or check == "{}":
             # If the Charges file is completely blank (fresh install),
             # It will read with a length of zero. We should skip this
             # to avoid testing or runtime errors. Notify the user and exit.
