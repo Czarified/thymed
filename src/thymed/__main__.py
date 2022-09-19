@@ -25,8 +25,8 @@ __version__ = importlib.metadata.version("thymed")
 def main() -> None:
     """Thymed.
 
-    This function will be used to execute the TUI.
-    For now, it's just a placeholder.
+    This command serves as the main entrypoint into
+    the Thymed CLI. Subcommands exist for each specific action.
 
     For more information, try: thymed hello
     """
@@ -53,7 +53,7 @@ def default_code() -> thymed.ChargeCode:
     """This function returns the default ChargeCode.
 
     The default ChargeCode is defined in the Thymed config file.
-    If no default id is defined, raises an error.
+    If no default id is defined, raises a warning.
     """
     with open(thymed._CHARGES) as f:
         codes = json.load(f, object_hook=thymed.object_decoder)
@@ -177,6 +177,7 @@ def list():
             sorted_codes = sorted(codes.items(), key=lambda kv: int(kv[0]))
             codes = [x[1] for x in sorted_codes]
         except json.JSONDecodeError:
+            print("Got JSON Error")
             # If the file is completely blank, we will get an error
             codes = dict()
 
