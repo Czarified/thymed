@@ -1,6 +1,7 @@
 """Command-line interface."""
 import importlib.metadata
 import json
+from typing import Any
 
 import click
 from rich.console import Console
@@ -49,7 +50,7 @@ def hello():
     )
 
 
-def default_code() -> thymed.ChargeCode:
+def default_code() -> Any:
     """This function returns the default ChargeCode.
 
     The default ChargeCode is defined in the Thymed config file.
