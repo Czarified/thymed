@@ -9,7 +9,7 @@ homepage = "https://github.com/czarified/thymed"
 repository = "https://github.com/czarified/thymed"
 documentation = "https://thymed.readthedocs.io"
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 2 - Pre-Alpha",
 ]
 
 [tool.poetry.urls]

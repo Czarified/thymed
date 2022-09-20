@@ -21,11 +21,16 @@
 
 ## Features
 
-- TODO
+- Flexible ChargeCode system with no limits on the number of codes you can define.
+- Simple method to "punch" a ChargeCode. Punching logs the current timestamp and changes the "state" of the ChargeCode (active/passive or "on/off the clock").
+- All data is stored locally! It's yours, you have complete control over it! There's no online backups, no phoning home, no licensing.
+- Command-Line Interface (CLI) for creating, listing, and punching in/out of charge codes.
 
 ## Requirements
 
-- TODO
+- No major requirements. If you have a Python version >= 3.8, you're good to go! Check out the installation section below.
+- Being familiar with the command-line is a plus. If the terminal scares you, this might not be the right tool for you.
+- Thymed uses [Rich](https://github.com/Textualize/rich) for console markup. A modern terminal will make output much prettier! :wink:
 
 ## Installation
 
