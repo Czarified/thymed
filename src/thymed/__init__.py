@@ -17,6 +17,7 @@ from typing import Tuple
 
 import toml
 from rich.console import Console
+from rich.panel import Panel
 
 
 # CONSTANTS
@@ -210,13 +211,23 @@ class ChargeCode:
 
 @dataclass
 class TimeCard:
-    """A TimeCard collects work activity."""
+    """A TimeCard collects work activity.
+    
+    TimeCards take a single ChargeCode and collect all punch data
+    for them. This enables filtering, reporting, and exporting 
+    data, but only for a single ChargeCode.
+    """
 
-    pass
+    id: int
+
+    def __post_init__(self) -> None:
+        """Grab the ChargeCode with the given id."""
+        self.code = get_code(self.id)
+
 
     def weekly_report(self) -> None:
         """Generates a report of all activity."""
-        pass
+        ...
 
 
 # Functions
@@ -229,30 +240,105 @@ def object_decoder(obj) -> Any:
     return obj
 
 
+def get_code(id: int) -> Any:
+    """Read stored data and return the ChargeCode specified."""
+    assert type(id) is int, 'ID must be an int!'
+    console = Console()
+    with open(_CHARGES) as f:
+        try:
+            codes = json.load(f, object_hook=object_decoder)
+        except json.JSONDecodeError:
+            # If the file is completely blank, we will get an error
+            codes = dict()
+    try:
+        # We assert id is an int, so it's safe to convert into string.
+        # Without asserting at the beginning, you could pass thru weird
+        # keys that are plain strings, or even something malicious.
+        code = codes[str(id)]
+    except KeyError:
+        text = (
+            f"Cannot find the charge code with id: {id}\n"
+            "Try viewing available charge codes with `thymed list` or "
+            "try punching the default code with `thymed punch`"
+        )
+        console.print(
+            Panel(
+                text,
+                title="[magenta]Code Not Found",
+                width=100,
+                style="spring_green1",
+            )
+        )
+        code = None
+
+    return code
+
 # TODO: Function to update _DATA global variable.
 #       This function should be available in the CLI,
 #       prompt to make the new file if non-existent,
 #       and update the config.toml to use the new file.
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # # Scratchpad
     console = Console(record=True)
-    # Create a new charge_code
-    # my_code = ChargeCode("Testing Thyme", "Testing charge code for Thyme.", 100)
-    with open(_CHARGES) as f:
-        codes = json.load(f, object_hook=object_decoder)
+    
+    import pandas as pd
+    import random
 
-    my_code = codes["100"]
-    print(my_code)
+    def build_fake_timesheet():
+        """Temporary function for testing."""
+        start = dt.datetime(2020,1,1)
+        end = dt.datetime(2020,12,31)
+        # Max number of days our worker will work in this time period
+        n = 251
+        name = 'Julia Farmer'
+        description = "Working on the farm in 2020."
+        id = 23
 
-    # my_code.write_class()
-    your_code = ChargeCode("Running Thyme", "Run run run.", 200)
-    your_code.write_class()
+        # Initialize the output variables
+        ins = []
+        outs = []
+        # Iteration variable. We don't want to repeat days or "work" them out of order.
+        iter_start = start
+        for i in range(n):
+            # Pick a random timestamp in the time range
+            date = dt.timedelta(days=random.randint(0,5)) + iter_start
+            iter_start = date
+            # Check if we should stop here (beyond the end date)
+            if (iter_start >= end) or (date > end):
+                break
+            
+            # Generate the timedelta for punch in/out on that day
+            in_delta = random.randint(-120,750)
+            out_delta = random.randint(-200,350)
+            
+            # Add the deltas for in/out
+            in_punch = dt.datetime(
+                year=date.year,
+                month=date.month,
+                day=date.day,
+                hour = 7
+            ) + dt.timedelta(seconds=in_delta)
+            ins.append(in_punch)
 
-    my_code.write_class()
-    my_code.punch()
+            out_punch = dt.datetime(
+                year=date.year,
+                month=date.month,
+                day=date.day,
+                hour = 17
+            ) + dt.timedelta(seconds=out_delta)
+            outs.append(out_punch)
 
-    my_code.write_json()
+        df = pd.DataFrame()
+        df['in_punch'] = ins
+        df['out_punch'] = outs
 
-    console.print("[red on white]   J O B    D O N E !! !!   ", justify="center")
+        console.print(df)
+
+        my_code = ChargeCode(name, description, id)
+        console.print(my_code)
+
+        my_code.times = tuple(zip(ins,outs))
+        my_code.write_class()
+        my_code.write_json()

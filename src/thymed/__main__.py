@@ -119,29 +119,7 @@ def punch(id) -> None:
     if not id:
         code = default_code()
     else:
-        with open(thymed._CHARGES) as f:
-            try:
-                codes = json.load(f, object_hook=thymed.object_decoder)
-            except json.JSONDecodeError:
-                # If the file is completely blank, we will get an error
-                codes = dict()
-        try:
-            code = codes[id]
-        except KeyError:
-            text = (
-                f"Cannot find the charge code with id: {id}\n"
-                "Try viewing available charge codes with `thymed list` or "
-                "try punching the default code with `thymed punch`"
-            )
-            console.print(
-                Panel(
-                    text,
-                    title="[magenta]Code Not Found",
-                    width=100,
-                    style="spring_green1",
-                )
-            )
-            code = None
+        code = thymed.get_code(int(id))
     if code is None:
         # code is None if the default code was not found, nor was it provided
         console.print("No code to punch, so exiting...")
