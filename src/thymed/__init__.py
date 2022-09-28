@@ -15,6 +15,7 @@ from typing import Any
 from typing import List
 from typing import Tuple
 
+import pandas as pd
 import toml
 from rich.console import Console
 from rich.panel import Panel
@@ -212,9 +213,9 @@ class ChargeCode:
 @dataclass
 class TimeCard:
     """A TimeCard collects work activity.
-    
+
     TimeCards take a single ChargeCode and collect all punch data
-    for them. This enables filtering, reporting, and exporting 
+    for them. This enables filtering, reporting, and exporting
     data, but only for a single ChargeCode.
     """
 
@@ -224,10 +225,68 @@ class TimeCard:
         """Grab the ChargeCode with the given id."""
         self.code = get_code(self.id)
 
+    def general_report(self, start: dt.datetime, end: dt.datetime) -> pd.DataFrame:
+        """A general method to pull times data.
 
-    def weekly_report(self) -> None:
-        """Generates a report of all activity."""
-        ...
+        Specify a start and end date. This method will
+        then form a pandas dataframe from the ChargeCode,
+        and filter down for all times inclusively between
+        the two dates.
+
+        Start and End can theoretically be any datetime object.
+        """
+        df = pd.DataFrame(self.code.times, columns=["clock_in", "clock_out"])
+        df["duration"] = df.clock_out - df.clock_in
+        df["hours"] = df.duration.apply(
+            lambda x: x.components.hours + round(x.components.minutes / 60, 1)
+        )
+        df["week"] = df.clock_in.dt.isocalendar().week
+        # Day 0 corresponds to Monday, Day 6 = Sunday
+        df["day"] = df.clock_in.dt.day_of_week
+        df["weekday"] = df.clock_in.apply(lambda x: x.strftime("%A"))
+        date_set = df.loc[df.clock_in <= end].loc[df.clock_in >= start].copy()
+
+        return date_set
+
+    def weekly_report(self) -> pd.DataFrame:
+        """Generates a report of all activity.
+
+        This method takes today's date, and returns a
+        filtered set of punch data for the past 7 days.
+        """
+        today = dt.datetime.today()
+        start = today - dt.timedelta(days=7)
+
+        return self.general_report(start, today)
+
+    def pay_period_report(self) -> pd.DataFrame:
+        """Generates a report of all activity.
+
+        This method takes today's date, and returns a
+        filtered set of punch data for the past 14 days.
+        """
+        today = dt.datetime.today()
+        start = today - dt.timedelta(days=14)
+
+        return self.general_report(start, today)
+
+    def monthly_report(self) -> pd.DataFrame:
+        """Generates a report of all activity.
+
+        This method takes today's date, and returns a
+        filtered set of punch data for the past 4 weeks.
+        """
+        today = dt.datetime.today()
+        start = today - dt.timedelta(weeks=4)
+
+        return self.general_report(start, today)
+
+    def to_excel(self, report: pd.DataFrame, folder: Path) -> Path:
+        """This method just saves the report to the directory provided."""
+        name = self.code.name.replace(" ", "_").replace("'", "")
+        filepath = folder / Path(f"{name}_report.xlsx")
+        report.to_excel(filepath)
+        return filepath
 
 
 # Functions
@@ -242,7 +301,7 @@ def object_decoder(obj) -> Any:
 
 def get_code(id: int) -> Any:
     """Read stored data and return the ChargeCode specified."""
-    assert type(id) is int, 'ID must be an int!'
+    assert type(id) is int, "ID must be an int!"
     console = Console()
     with open(_CHARGES) as f:
         try:
@@ -273,6 +332,7 @@ def get_code(id: int) -> Any:
 
     return code
 
+
 # TODO: Function to update _DATA global variable.
 #       This function should be available in the CLI,
 #       prompt to make the new file if non-existent,
@@ -282,63 +342,66 @@ def get_code(id: int) -> Any:
 if __name__ == "__main__":  # pragma: no cover
     # # Scratchpad
     console = Console(record=True)
-    
-    import pandas as pd
+
     import random
 
-    def build_fake_timesheet():
+    def build_fake_times(
+        start: dt.datetime,
+        end: dt.datetime,
+        name: str,
+        description: str,
+        id: int,
+        n: int = 250,
+    ):
         """Temporary function for testing."""
-        start = dt.datetime(2020,1,1)
-        end = dt.datetime(2020,12,31)
-        # Max number of days our worker will work in this time period
-        n = 251
-        name = 'Julia Farmer'
-        description = "Working on the farm in 2020."
-        id = 23
-
         # Initialize the output variables
         ins = []
         outs = []
         # Iteration variable. We don't want to repeat days or "work" them out of order.
         iter_start = start
-        for i in range(n):
+        for _i in range(n):
             # Pick a random timestamp in the time range
-            date = dt.timedelta(days=random.randint(0,5)) + iter_start
+            date = dt.timedelta(days=random.randint(0, 2)) + iter_start
             iter_start = date
             # Check if we should stop here (beyond the end date)
             if (iter_start >= end) or (date > end):
                 break
-            
+
             # Generate the timedelta for punch in/out on that day
-            in_delta = random.randint(-120,750)
-            out_delta = random.randint(-200,350)
-            
+            in_delta = random.randint(-220, 1850)
+            out_delta = random.randint(-1000, 1550)
+
             # Add the deltas for in/out
             in_punch = dt.datetime(
-                year=date.year,
-                month=date.month,
-                day=date.day,
-                hour = 7
+                year=date.year, month=date.month, day=date.day, hour=8
             ) + dt.timedelta(seconds=in_delta)
             ins.append(in_punch)
 
             out_punch = dt.datetime(
-                year=date.year,
-                month=date.month,
-                day=date.day,
-                hour = 17
+                year=date.year, month=date.month, day=date.day, hour=15
             ) + dt.timedelta(seconds=out_delta)
             outs.append(out_punch)
 
         df = pd.DataFrame()
-        df['in_punch'] = ins
-        df['out_punch'] = outs
+        df["in_punch"] = ins
+        df["out_punch"] = outs
 
         console.print(df)
 
         my_code = ChargeCode(name, description, id)
         console.print(my_code)
 
-        my_code.times = tuple(zip(ins,outs))
+        my_code.times = tuple(zip(ins, outs))
         my_code.write_class()
         my_code.write_json()
+
+    # build_fake_times(
+    #     dt.datetime(2022,5,31),
+    #     dt.datetime.today(),
+    #     name="Ben at Hermeus",
+    #     description="Ben's work at Hermeus since Memorial Day this year.",
+    #     id = 69
+    # )
+    card = TimeCard(69)
+    console.print(card.weekly_report())
+    card.to_excel(card.weekly_report(), Path(r"C:\Users\Czarified\.thymed"))
