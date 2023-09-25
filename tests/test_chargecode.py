@@ -9,6 +9,7 @@ import pytest
 from rich.console import Console
 
 from thymed import _CHARGES
+from thymed import _DATA
 from thymed import ChargeCode
 from thymed import object_decoder
 
@@ -41,6 +42,26 @@ def remove_test_charge(id: str = "99999999") -> None:
             out[k] = dict_val
         # Write the new set of codes back to the file.
         _ = f.write(json.dumps(out, indent=2))
+
+
+def remove_test_data(id: str = "99999999") -> None:
+    """Cleanup the test ChargeCode punch data.
+
+    Testing creates a ChargeCode. This function
+    manually removes the data, since deleting/removing
+    ChargeCode objects is not currently supported.
+    """
+    with open(_DATA) as f:
+        # We know it won't be blank, since we only call
+        # this function after we tested it already. So
+        # no try:except like the rest of the codebase.
+        times = json.load(f)
+
+    with open(_DATA, "w") as f:
+        # Remove the testing code with a pop method.
+        _ = times.pop(id)
+        # Write the rest of times back to the file.
+        _ = f.write(json.dumps(times, indent=2))
 
 
 # FIXTURES
@@ -129,6 +150,28 @@ def test_punch(blank_code):
     assert not blank_code.is_active
 
 
-# def test_fake_time(fake_times):
-#     """Build some real data to work with."""
-#     remove_test_charge()
+def test_data(blank_code):
+    """Write some data, and instantiate a code that recognizes the times."""
+    blank_code.write_class()
+    blank_code.punch()
+    time.sleep(1)
+    blank_code.punch()
+    blank_code.write_json()
+
+    _ = ChargeCode("New Blank Boi", "There's something here.", 99999998)
+    remove_test_charge("99999998")
+    remove_test_data("99999998")
+
+
+def test_fake_time(fake_times):
+    """Build some real data to work with."""
+    remove_test_charge()
+    remove_test_data()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    with open(_DATA) as f:
+        times = json.load(f)
+        print(times)
+        _ = times.pop("99999998")
+        print(times)
