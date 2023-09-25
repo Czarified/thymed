@@ -43,6 +43,9 @@ if not __DIR.exists():
 
         # Where all charge code objects are recorded
         charges = "{CHARGEFILE.as_posix()}"
+
+        # The default charge code
+        default = "0"
     """
     parsed_toml = toml.loads(default_config)
     with open(__CONFIG, "w") as f:
@@ -120,7 +123,7 @@ class ChargeCode:
 
     @property
     def is_active(self) -> Any:
-        """The charge code is active if it has been initalized, but not closed."""
+        """The charge code is active if it has been activated, but not closed."""
         # If the last item in the times list has only 1 entry,
         # we assume the code is still active.
         if len(self.times) == 0:
@@ -337,71 +340,3 @@ def get_code(id: int) -> Any:
 #       This function should be available in the CLI,
 #       prompt to make the new file if non-existent,
 #       and update the config.toml to use the new file.
-
-
-if __name__ == "__main__":  # pragma: no cover
-    # # Scratchpad
-    console = Console(record=True)
-
-    import random
-
-    def build_fake_times(
-        start: dt.datetime,
-        end: dt.datetime,
-        name: str,
-        description: str,
-        id: int,
-        n: int = 250,
-    ):
-        """Temporary function for testing."""
-        # Initialize the output variables
-        ins = []
-        outs = []
-        # Iteration variable. We don't want to repeat days or "work" them out of order.
-        iter_start = start
-        for _i in range(n):
-            # Pick a random timestamp in the time range
-            date = dt.timedelta(days=random.randint(0, 2)) + iter_start
-            iter_start = date
-            # Check if we should stop here (beyond the end date)
-            if (iter_start >= end) or (date > end):
-                break
-
-            # Generate the timedelta for punch in/out on that day
-            in_delta = random.randint(-220, 1850)
-            out_delta = random.randint(-1000, 1550)
-
-            # Add the deltas for in/out
-            in_punch = dt.datetime(
-                year=date.year, month=date.month, day=date.day, hour=8
-            ) + dt.timedelta(seconds=in_delta)
-            ins.append(in_punch)
-
-            out_punch = dt.datetime(
-                year=date.year, month=date.month, day=date.day, hour=15
-            ) + dt.timedelta(seconds=out_delta)
-            outs.append(out_punch)
-
-        df = pd.DataFrame()
-        df["in_punch"] = ins
-        df["out_punch"] = outs
-
-        console.print(df)
-
-        my_code = ChargeCode(name, description, id)
-        console.print(my_code)
-
-        my_code.times = tuple(zip(ins, outs))
-        my_code.write_class()
-        my_code.write_json()
-
-    # build_fake_times(
-    #     dt.datetime(2022,5,31),
-    #     dt.datetime.today(),
-    #     name="Ben at Hermeus",
-    #     description="Ben's work at Hermeus since Memorial Day this year.",
-    #     id = 69
-    # )
-    card = TimeCard(69)
-    console.print(card.weekly_report())
-    card.to_excel(card.weekly_report(), Path(r"C:\Users\Czarified\.thymed"))

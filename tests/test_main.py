@@ -10,7 +10,7 @@ from thymed import object_decoder
 
 
 # CLEANUP UTILITIES
-def remove_test_charge() -> None:
+def remove_test_charge(id: str = "99999999") -> None:
     """Cleanup the test ChargeCode.
 
     Testing creates a ChargeCode. This function
@@ -25,7 +25,7 @@ def remove_test_charge() -> None:
 
     with open(_CHARGES, "w") as f:
         # Remove the testing code with a pop method.
-        _ = codes.pop("99999999")
+        _ = codes.pop(id)
         # Convert the dict of ChargeCodes into a plain dict
         out = {}
         for k, v in codes.items():
@@ -77,6 +77,8 @@ def test_main_punch_default(runner: CliRunner) -> None:
     This test will call the default code. In the CI,
     this chargecode will not exist, but the error is
     handled and the command continues on.
+
+    TODO: We need to _actually_ test punching charge codes...
     """
     result = runner.invoke(__main__.punch)
     assert result.exit_code == 0

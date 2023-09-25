@@ -108,7 +108,7 @@ def punch(id) -> None:
     Punches the current time. Write the data and the code,
     then exit.
     """
-    # Manually check some argument varialbes...
+    # Manually check some argument variables...
     if len(id) > 1:
         raise NotImplementedError
     elif len(id) == 1:
