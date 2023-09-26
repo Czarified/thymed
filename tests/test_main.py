@@ -94,6 +94,23 @@ def test_main_punch_code(runner: CliRunner) -> None:
     assert result.exit_code == 0
 
 
+def test_main_punch_multiple(runner: CliRunner) -> None:
+    """It exits with a status code of zero.
+
+    This will execute all the remaining cleanup
+    lines in our cleanup function.
+    """
+    _ = runner.invoke(
+        __main__.create, input="\n".join(["test_code", "description", "99999999", "y"])
+    )
+    _ = runner.invoke(
+        __main__.create, input="\n".join(["test_code", "description", "99999998", "y"])
+    )
+
+    remove_test_charge()
+    remove_test_charge("99999998")
+
+
 def test_main_list_generic(runner: CliRunner) -> None:
     """It exits with a status code of zero.
 

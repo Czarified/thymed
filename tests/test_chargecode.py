@@ -84,11 +84,11 @@ def fake_times(
 ) -> None:
     """Temporary function for testing."""
     # Initialize default inputs
-    if start is None:
+    if not start:
         start = dt.datetime(2022, 5, 31)
-    if end is None:
+    if not end:
         end = dt.datetime.today()
-    if console is None:
+    if not console:
         console = Console()
     # Initialize the output variables
     ins = []
@@ -145,17 +145,18 @@ def test_punch(blank_code):
     """Punches a charge code, sees active. Punches again, sees inactive."""
     blank_code.punch()
     assert blank_code.is_active
-    time.sleep(1)
+    time.sleep(0.1)
     blank_code.punch()
     assert not blank_code.is_active
 
 
 def test_data(blank_code):
     """Write some data, and instantiate a code that recognizes the times."""
+    blank_code.punch()
+    time.sleep(0.1)
+    blank_code.punch()
+
     blank_code.write_class()
-    blank_code.punch()
-    time.sleep(1)
-    blank_code.punch()
     blank_code.write_json()
 
     _ = ChargeCode("New Blank Boi", "There's something here.", 99999998)
@@ -163,10 +164,37 @@ def test_data(blank_code):
     remove_test_data("99999998")
 
 
-def test_fake_time(fake_times):
+def test_multiple():
+    """Make multiple for post_init checks."""
+    one = ChargeCode("One", "Tester 1, Tester One.", 1)
+    one.write_class()
+    assert one.is_active is None
+    two = ChargeCode("Two", "Tester 2, Tester Two.", 2)
+    two.write_class()
+    three = ChargeCode("Two", "Tester 3, Tester Two?", 2)
+    three.write_class()
+
+    remove_test_charge("1")
+    remove_test_charge("2")
+
+
+def test_fake_time(fake_times, blank_code):
     """Build some real data to work with."""
+    blank_code.punch()
+    time.sleep(0.1)
+    # Writing JSON after json already has been written,
+    # tests different lines of code.
+    blank_code.write_class()
+    blank_code.write_json()
+
     remove_test_charge()
     remove_test_data()
+
+    time.sleep(0.1)
+    blank_code.punch()
+    blank_code.write_json(log=True)
+    remove_test_charge("99999998")
+    remove_test_data("99999998")
 
 
 if __name__ == "__main__":  # pragma: no cover
