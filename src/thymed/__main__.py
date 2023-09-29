@@ -1,5 +1,5 @@
 """Command-line interface."""
-import importlib.metadata
+import pkg_resources
 import json
 from typing import Any
 
@@ -18,7 +18,7 @@ import thymed
 install()
 
 
-__version__ = importlib.metadata.version("thymed")
+__version__ = pkg_resources.get_distribution('thymed').version
 
 
 @click.group()
@@ -43,11 +43,6 @@ def hello():
         "I am [spring_green3 italic]Thymed.[/] " "Simple command-line time-tracking."
     )
     console.print(f"Current Version: {__version__}\n")
-    console.print(
-        "Currently, this is a placeholder tool. "
-        "Functionality exists in the API, but "
-        "is not exteded to CLI yet.\n"
-    )
 
 
 def default_code() -> Any:

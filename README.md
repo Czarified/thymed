@@ -61,7 +61,7 @@ please [file an issue] along with a detailed description.
 
 ## Credits
 
-This project was generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter] template.
+This project was originally generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter] template.
 
 [@cjolowicz]: https://github.com/cjolowicz
 [pypi]: https://pypi.org/
@@ -71,6 +71,6 @@ This project was generated from [@cjolowicz]'s [Hypermodern Python Cookiecutter]
 
 <!-- github-only -->
 
-[license]: https://github.com/czarified/thymed/blob/main/LICENSE
-[contributor guide]: https://github.com/czarified/thymed/blob/main/CONTRIBUTING.md
+[license]: https://github.com/czarified/thymed/blob/master/LICENSE
+[contributor guide]: https://github.com/czarified/thymed/blob/master/CONTRIBUTING.md
 [command-line reference]: https://thymed.readthedocs.io/en/latest/usage.html
