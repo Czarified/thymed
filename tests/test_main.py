@@ -64,11 +64,9 @@ def test_main_create(runner: CliRunner) -> None:
     Create a simple ChargeCode for testing.
     """
     result = runner.invoke(
-        __main__.create, input="\n".join(["test_code", "description", "99999999", "y"])
+        __main__.create, input="\n".join(["default", "description", "0", "y"])
     )
     assert result.exit_code == 0
-
-    remove_test_charge()
 
 
 def test_main_punch_default(runner: CliRunner) -> None:
@@ -90,7 +88,7 @@ def test_main_punch_code(runner: CliRunner) -> None:
     This test will call a specific punch code. Again,
     in the automated CI this will not exist.
     """
-    result = runner.invoke(__main__.punch, "99999999")
+    result = runner.invoke(__main__.punch, "0")
     assert result.exit_code == 0
 
 

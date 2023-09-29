@@ -45,7 +45,7 @@ if not __DIR.exists():
         charges = "{CHARGEFILE.as_posix()}"
 
         # The default charge code
-        default = "0"
+        default = 0
     """
     parsed_toml = toml.loads(default_config)
     with open(__CONFIG, "w") as f:
@@ -114,10 +114,10 @@ class ChargeCode:
                             self.times.append(
                                 tuple(dt.datetime.fromisoformat(time) for time in entry)
                             )
-                except json.JSONDecodeError:
+                except json.JSONDecodeError:  # pragma: no cover
                     # If the file is completely blank, we will get an error
                     pass
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             # Otherwise, let me know what went wrong
             raise e
 
@@ -166,7 +166,7 @@ class ChargeCode:
                 # We overwrite data directly here, because the post_init method
                 # reads the same file.
                 final_data[f"{self.id}"] = _times
-        except json.JSONDecodeError:
+        except json.JSONDecodeError:  # pragma: no cover
             # Unless we can't read the file
             console.log("[red]Got JSONDecodeError, assuming the file was blank...")
             final_data = {self.id: _times}
@@ -194,7 +194,7 @@ class ChargeCode:
         with open(_CHARGES) as f:
             try:
                 codes = json.load(f)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError:  # pragma: no cover
                 # If the file is completely blank, we will get an error
                 codes = dict()
 
@@ -309,8 +309,16 @@ def get_code(id: int) -> Any:
     with open(_CHARGES) as f:
         try:
             codes = json.load(f, object_hook=object_decoder)
-        except json.JSONDecodeError:
-            # If the file is completely blank, we will get an error
+        except json.JSONDecodeError:  # pragma: no cover
+            # If the Charges file is completely blank (fresh install),
+            # It will read with a length of zero. We should skip this
+            # to avoid testing or runtime errors. Notify the user and exit.
+            console = Console()
+            console.print(
+                "Looks like you're trying to use a ChargeCode "
+                "without first defining any codes! Try running `thymed create` "
+                "first."
+            )
             codes = dict()
     try:
         # We assert id is an int, so it's safe to convert into string.

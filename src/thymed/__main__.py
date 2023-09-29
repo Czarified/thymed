@@ -23,7 +23,7 @@ __version__ = importlib.metadata.version("thymed")
 
 @click.group()
 @click.version_option()
-def main() -> None:
+def main() -> None:  # pragma: no cover
     """Thymed.
 
     This command serves as the main entrypoint into
@@ -56,25 +56,9 @@ def default_code() -> Any:
     The default ChargeCode is defined in the Thymed config file.
     If no default id is defined, raises a warning.
     """
-    with open(thymed._CHARGES) as f:
-        check = f.read()
-        if len(check) == 0 or check == "{}":
-            # If the Charges file is completely blank (fresh install),
-            # It will read with a length of zero. We should skip this
-            # to avoid testing or runtime errors. Notify the user and exit.
-            console = Console()
-            console.print(
-                "Looks like you're trying to punch a ChargeCode "
-                "without first defining any codes! Try running `thymed create` "
-                "first."
-            )
-            return None
-
-        codes = json.load(f, object_hook=thymed.object_decoder)
-
     try:
         default_id = thymed.__OPTIONS["database"]["default"]
-        return codes[str(default_id)]
+        return thymed.get_code(default_id)
     except KeyError:
         # KeyError means default code isn't set. We should notify user,
         # and exit.
@@ -109,7 +93,7 @@ def punch(id) -> None:
     then exit.
     """
     # Manually check some argument variables...
-    if len(id) > 1:
+    if len(id) > 1:  # pragma: no cover
         raise NotImplementedError
     elif len(id) == 1:
         id = id[0]
@@ -153,7 +137,7 @@ def create():
         new_code.write_class()
         # TODO: Make this prettier
         console.print("Wrote ChargeCode data to the Thymed Charges file!")
-    else:
+    else:  # pragma: no cover
         # TODO: Make this prettier
         console.print("Exiting without writing new ChargeCode...Try again.")
 
@@ -168,7 +152,7 @@ def list():
             # Sort the codes dictionary by key (code id)
             sorted_codes = sorted(codes.items(), key=lambda kv: int(kv[0]))
             codes = [x[1] for x in sorted_codes]
-        except json.JSONDecodeError:
+        except json.JSONDecodeError:  # pragma: no cover
             print("Got JSON Error")
             # If the file is completely blank, we will get an error
             codes = dict()
