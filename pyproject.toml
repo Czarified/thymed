@@ -19,9 +19,10 @@ Changelog = "https://github.com/czarified/thymed/releases"
 python = "^3.8"
 click = ">=8.0.1"
 toml = "^0.10.2"
-rich = "^12.5.1"
+rich = ">12.5.1"
 pandas = "^1.5.0"
 openpyxl = "^3.0.10"
+textual = "^0.38.1"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
