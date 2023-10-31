@@ -164,3 +164,60 @@ def test_monthly(fake_times):
 
     remove_test_charge()
     remove_test_data()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    def make_times(
+    start: dt.datetime = None,
+    end: dt.datetime = None,
+    name: str = "FakeCode",
+    description: str = "These times are fake.",
+    id: int = 99999999,
+    n: int = 60,
+    console: Console = None,
+) -> None:
+        """Temporary function for testing."""
+        # Initialize default inputs
+        if not end:
+            end = dt.datetime.today()
+        if not start:
+            start = end - dt.timedelta(days=35)
+        if not console:
+            console = Console()
+        # Initialize the output variables
+        ins = []
+        outs = []
+        # Iteration variable. We don't want to repeat days or "work" them out of order.
+        iter_start = start
+        for _i in range(n):
+            # Pick a random timestamp in the time range
+            date = dt.timedelta(days=random.randint(0, 2)) + iter_start
+            iter_start = date
+            # Check if we should stop here (beyond the end date)
+            if (iter_start >= end) or (date > end):
+                break
+
+            # Generate the timedelta for punch in/out on that day
+            in_delta = random.randint(-220, 1850)
+            out_delta = random.randint(-1000, 1550)
+
+            # Add the deltas for in/out
+            in_punch = dt.datetime(
+                year=date.year, month=date.month, day=date.day, hour=8
+            ) + dt.timedelta(seconds=in_delta)
+            ins.append(in_punch)
+
+            out_punch = dt.datetime(
+                year=date.year, month=date.month, day=date.day, hour=15
+            ) + dt.timedelta(seconds=out_delta)
+            outs.append(out_punch)
+
+        my_code = ChargeCode(name, description, id)
+
+        my_code.times = tuple(zip(ins, outs))
+        my_code.write_class()
+        my_code.write_json()
+
+    make_times(name="Project Delta", description="Work on project Delta.", id=103)
+    make_times(name="Project Epsilon", description="Work on project Epsilon.", id=104)
+    make_times(name="Project Zeta", description="Work on project Zeta.", id=105)
