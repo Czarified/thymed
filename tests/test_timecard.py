@@ -167,15 +167,16 @@ def test_monthly(fake_times):
 
 
 if __name__ == "__main__":  # pragma: no cover
+
     def make_times(
-    start: dt.datetime = None,
-    end: dt.datetime = None,
-    name: str = "FakeCode",
-    description: str = "These times are fake.",
-    id: int = 99999999,
-    n: int = 60,
-    console: Console = None,
-) -> None:
+        start: dt.datetime = None,
+        end: dt.datetime = None,
+        name: str = "FakeCode",
+        description: str = "These times are fake.",
+        id: int = 99999999,
+        n: int = 60,
+        console: Console = None,
+    ) -> None:
         """Temporary function for testing."""
         # Initialize default inputs
         if not end:

@@ -3,18 +3,28 @@
 The Text User Interface is all created, managed,
 and tested with Textual.
 """
-from typing import Any, Coroutine
-from textual import events
-import thymed
 import json
 from time import monotonic
 
-from rich.text import Text
-
-from textual.app import App, ComposeResult
-from textual.containers import Container, ScrollableContainer
+# from rich.text import Text
+# from textual import events
+from textual.app import App
+from textual.app import ComposeResult
+from textual.containers import Container
+from textual.containers import ScrollableContainer
 from textual.reactive import reactive
-from textual.widgets import Button, Header, Footer, Static, DataTable, Rule
+from textual.widgets import Button
+from textual.widgets import DataTable
+from textual.widgets import Footer
+from textual.widgets import Header
+from textual.widgets import Rule
+from textual.widgets import Static
+
+import thymed
+
+
+# from typing import Any
+# from typing import Coroutine
 
 
 ROWS = [("ID", "NAME", "DESCRIPTION", "ACTIVE")]
@@ -34,6 +44,7 @@ for code in codes:
 
 class TimeDisplay(Static):
     """A widget to display elapsed time."""
+
     start_time = reactive(monotonic)
     time = reactive(0.0)
     total = reactive(0.0)
@@ -47,13 +58,13 @@ class TimeDisplay(Static):
         self.time = self.total + monotonic() - self.start_time
 
     def watch_time(self, time: float) -> None:
-        """Called when the time attribute changes."""
+        """Called when the attribute changes."""
         minutes, seconds = divmod(time, 60)
         hours, minutes = divmod(minutes, 60)
         self.update(f"{hours:02,.0f}:{minutes:02.0f}:{seconds:05.2f}")
 
     def start(self) -> None:
-        """Method to start (or resume) time updating."""
+        """Method to resume time updating."""
         self.start_time = monotonic()
         self.update_timer.resume()
 
@@ -95,7 +106,7 @@ class Stopwatch(Static):
 
 class Thingy(Static):
     """This thingy has a couple buttons to add and remove stopwatches."""
-    
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Event handler for app-level actions based on buttons."""
         button_id = event.button.id
@@ -118,28 +129,26 @@ class HomePane(Container):
     """A view of Thymed ChargeCodes, and buttons to add timers."""
 
     def compose(self) -> ComposeResult:
+        """Compose."""
         self.name_widget = Static("Thymed.\n")
         self.table_title_widget = Static("ChargeCodes in Current Database:")
         yield self.name_widget
         yield self.table_title_widget
         yield DataTable()
         yield Thingy()
-        
 
     def on_mount(self) -> None:
+        """What to do on mount."""
         self.name_widget.styles.color = "springgreen"
         self.table_title_widget.styles.color = "springgreen"
         self.table_title_widget.styles.content_align = ("center", "top")
 
 
 class Thymed(App):
-    """A Textual app to manage Thymed!"""
+    """A Textual app to manage Thymed!!"""
 
     CSS_PATH = "thymed.tcss"
-    BINDINGS = [
-        ("escape", "exit", "Quit"),
-        ("d", "toggle_dark", "Toggle dark mode")
-    ]
+    BINDINGS = [("escape", "exit", "Quit"), ("d", "toggle_dark", "Toggle dark mode")]
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
@@ -150,6 +159,7 @@ class Thymed(App):
         yield ScrollableContainer(Stopwatch(), Stopwatch(), id="timers")
 
     def on_mount(self) -> None:
+        """What to do on mount."""
         self.title = "Thymed"
         table = self.query_one(DataTable)
         table.add_columns(*ROWS[0])
@@ -161,7 +171,6 @@ class Thymed(App):
         cursor_row = event.cursor_row
         assert cursor_row == 0
 
-
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.dark = not self.dark
@@ -171,6 +180,6 @@ class Thymed(App):
         self.exit()
 
 
-if __name__ == "__main__":      # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     app = Thymed()
     app.run()

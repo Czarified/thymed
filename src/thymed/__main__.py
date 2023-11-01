@@ -1,9 +1,9 @@
 """Command-line interface."""
-import pkg_resources
 import json
 from typing import Any
 
 import click
+import pkg_resources
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm
@@ -18,7 +18,7 @@ import thymed
 install()
 
 
-__version__ = pkg_resources.get_distribution('thymed').version
+__version__ = pkg_resources.get_distribution("thymed").version
 
 
 @click.group()
