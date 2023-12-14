@@ -12,7 +12,8 @@ from textual.app import App
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.containers import ScrollableContainer
-from textual.reactive import reactive
+from textual.reactive import reactive, var
+from textual.widget import Widget
 from textual.widgets import Button
 from textual.widgets import DataTable
 from textual.widgets import Footer
@@ -48,7 +49,8 @@ class TimeDisplay(Static):
     start_time = reactive(monotonic)
     time = reactive(0.0)
     total = reactive(0.0)
-
+    name = reactive("name")
+    
     def on_mount(self) -> None:
         """Event handler called when widget is added to the app."""
         self.update_timer = self.set_interval(1 / 60, self.update_time, pause=True)
@@ -61,7 +63,7 @@ class TimeDisplay(Static):
         """Called when the attribute changes."""
         minutes, seconds = divmod(time, 60)
         hours, minutes = divmod(minutes, 60)
-        self.update(f"{hours:02,.0f}:{minutes:02.0f}:{seconds:05.2f}")
+        self.update(f"{self.name}\n{hours:02,.0f}:{minutes:02.0f}:{seconds:05.2f}")
 
     def start(self) -> None:
         """Method to resume time updating."""
@@ -79,9 +81,10 @@ class TimeDisplay(Static):
         self.total = 0
         self.time = 0
 
-
 class Stopwatch(Static):
     """A stopwatch widget."""
+
+    name = reactive("name")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Event handler called when a button is pressed."""
@@ -98,11 +101,20 @@ class Stopwatch(Static):
 
     def compose(self) -> ComposeResult:
         """Create child widgets of a stopwatch."""
+        display = TimeDisplay()
+        display.name = self.name
         yield Button("Start", id="start", variant="success")
         yield Button("Stop", id="stop", variant="error")
         yield Button("Reset", id="reset")
-        yield TimeDisplay()
+        yield display
 
+class ReactiveTitle(Widget):
+    """A Reactive Title that changes based on the selected DataTable row."""
+    name: reactive[str | None] = reactive("This is a title.")
+    sub: reactive[str | None] = reactive("Description.")
+
+    def render(self) -> str:
+        return f"{self.name}\n{self.sub}"
 
 class Thingy(Static):
     """This thingy has a couple buttons to add and remove stopwatches."""
@@ -111,7 +123,9 @@ class Thingy(Static):
         """Event handler for app-level actions based on buttons."""
         button_id = event.button.id
         if button_id == "add":
+            name = self.query_one(ReactiveTitle).name
             new_stopwatch = Stopwatch()
+            new_stopwatch.name = name
             self.app.query_one("#timers").mount(new_stopwatch)
             new_stopwatch.scroll_visible()
         elif button_id == "remove":
@@ -122,6 +136,7 @@ class Thingy(Static):
     def compose(self) -> ComposeResult:
         """Create child widgets of a stopwatch."""
         yield Button("Add", id="add", variant="success")
+        yield ReactiveTitle(id="hometitle", classes="title")
         yield Button("Remove", id="remove", variant="error")
 
 
@@ -131,7 +146,7 @@ class HomePane(Container):
     def compose(self) -> ComposeResult:
         """Compose."""
         self.name_widget = Static("Thymed.\n")
-        self.table_title_widget = Static("ChargeCodes in Current Database:")
+        self.table_title_widget = Static("ChargeCodes in Current Database:", classes="title")
         yield self.name_widget
         yield self.table_title_widget
         yield DataTable()
@@ -140,8 +155,6 @@ class HomePane(Container):
     def on_mount(self) -> None:
         """What to do on mount."""
         self.name_widget.styles.color = "springgreen"
-        self.table_title_widget.styles.color = "springgreen"
-        self.table_title_widget.styles.content_align = ("center", "top")
 
 
 class Thymed(App):
@@ -168,8 +181,9 @@ class Thymed(App):
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected):
         """Grab the selected ChargeCode."""
-        cursor_row = event.cursor_row
-        assert cursor_row == 0
+        data = event.data_table.get_row(event.row_key)
+        self.query_one("#hometitle", ReactiveTitle).name = str(data[1])
+        self.query_one("#hometitle", ReactiveTitle).sub = str(data[2])
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

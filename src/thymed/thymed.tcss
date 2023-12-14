@@ -9,6 +9,7 @@ HomePane {
 
 Thingy {
     layout: horizontal;
+    content-align: center top;
     background: $boost;
     height: 5;
     margin: 2;
@@ -76,4 +77,9 @@ Button {
 
 .started #reset {
     visibility: hidden
+}
+
+.title {
+    content-align: center top;
+    color:springgreen
 }
