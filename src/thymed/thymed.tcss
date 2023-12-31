@@ -1,85 +1,140 @@
-HomePane {
-    layout: vertical;
-    content-align: center top;
-    background: $boost;
-    margin: 1;
-    min-width: 50;
-    padding: 0;
+* {
+    transition: background 500ms in_out_cubic, color 500ms in_out_cubic;
 }
 
-Thingy {
-    layout: horizontal;
-    content-align: center top;
-    background: $boost;
-    height: 5;
-    margin: 2;
-    padding: 1;
-}
-
-Stopwatch {
-    layout: horizontal;
-    background: $boost;
-    height: 5;
-    margin: 1;
-    min-width: 50;
-    padding: 1;
-}
-
-TimeDisplay {
-    content-align: center middle;
-    text-opacity: 60%;
-    height: 3;
-}
-
-Button {
-    width: 16;
-}
-
-#start {
-    dock: left;
-}
-
-#stop {
-    dock: left;
-    display: none;
-}
-
-#reset {
-    dock: right;
-}
-
-#add {
-    dock: left;
-}
-
-#remove {
-    dock: right;
+Screen {
+    layers: base overlay notifications;
+    overflow: hidden;
 }
 
 
-.started {
-    text-style: bold;
-    background: $success;
+Notification {
+    dock: bottom;
+    layer: notification;
+    width: auto;
+    margin: 2 4;
+    padding: 1 2;
+    background: $background;
     color: $text;
+    height: auto;
+
 }
 
-.started TimeDisplay {
-    text-opacity: 100%;
+Sidebar {
+    width: 40;
+    background: $panel;
+    transition: offset 500ms in_out_cubic;
+    layer: overlay;
+
 }
 
-.started #start {
-    display: none
+Sidebar:focus-within {
+    offset: 0 0 !important;
 }
 
-.started #stop {
-    display: block
+Sidebar.-hidden {
+    offset-x: -100%;
 }
 
-.started #reset {
-    visibility: hidden
+Sidebar Title {
+    background: $boost;
+    color: $secondary;
+    padding: 1 1;
+    border-right: vkey $background;
+    dock: top;
+    text-align: center;
+    text-style: bold;
 }
 
-.title {
-    content-align: center top;
-    color:springgreen
+
+OptionGroup {
+    background: $boost;
+    color: $text;
+    height: 1fr;
+    border-right: vkey $background;
+}
+
+.option {
+    margin: 1 1;
+    height: 3;
+    background: $boost;
+    border: tall $panel;
+    text-align: center;
+}
+
+.applet {
+    width: 1fr;
+    height: 4fr;
+    border: solid white;
+    background: $surface;
+}
+
+#info {
+    width: 1fr;
+    height: 1fr;
+    border: solid white;
+    background: $surface;
+}
+
+Screen>Container {
+    height: 100%;
+    overflow: hidden;
+}
+
+.pad {
+    margin: 1 0;
+}
+
+DataTable {
+    height: 16;
+    max-height: 16;
+}
+
+PunchForm {
+    height: auto;
+    padding: 1 2;
+    layout: grid;
+    grid-size: 2;
+    grid-rows: 4;
+    grid-columns: 20 1fr;
+    background: $boost;
+    border: wide $background;
+}
+
+PunchForm Button {
+    margin: 0 1;
+    width: 100%;
+}
+
+PunchForm .label {
+    padding: 1 2;
+    text-align: right;
+    color: mediumspringgreen;
+}
+
+Message {
+    margin: 0 1;
+
+}
+
+Tree {
+    margin: 1 0;
+}
+
+Window {
+    background: $boost;
+    overflow: auto;
+    height: auto;
+    max-height: 16;
+}
+
+Window>Static {
+    width: auto;
+}
+
+Version {
+    color: $text-disabled;
+    dock: bottom;
+    text-align: center;
+    padding: 1;
 }

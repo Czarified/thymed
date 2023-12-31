@@ -157,10 +157,10 @@ class HomePane(Container):
         self.name_widget.styles.color = "springgreen"
 
 
-class Thymed(App):
-    """A Textual app to manage Thymed!!"""
+class Thymer(App):
+    """A Textual app to manage timers!!"""
 
-    CSS_PATH = "thymed.tcss"
+    CSS_PATH = "thymer.tcss"
     BINDINGS = [("escape", "exit", "Quit"), ("d", "toggle_dark", "Toggle dark mode")]
 
     def compose(self) -> ComposeResult:
@@ -195,5 +195,5 @@ class Thymed(App):
 
 
 if __name__ == "__main__":  # pragma: no cover
-    app = Thymed()
+    app = Thymer()
     app.run()
