@@ -46,6 +46,30 @@ Sidebar Title {
     text-style: bold;
 }
 
+ChargeManager Title {
+    background: $boost;
+    color: springgreen;
+    padding: 1 1;
+    border-right: vkey $background;
+    dock: top;
+    text-align: center;
+    text-style: bold underline;
+}
+
+.data {
+    background: $boost;
+    color: springgreen;
+    content-align: center top;
+}
+
+.add {
+    dock: left;
+}
+
+.remove {
+    dock: right;
+}
+
 
 OptionGroup {
     background: $boost;
@@ -62,7 +86,7 @@ OptionGroup {
     text-align: center;
 }
 
-.applet {
+#applet {
     width: 1fr;
     height: 4fr;
     border: solid white;

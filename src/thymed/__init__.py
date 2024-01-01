@@ -122,7 +122,7 @@ class ChargeCode:
             raise e
 
     @property
-    def is_active(self) -> Any:
+    def is_active(self) -> [bool, Any]:
         """The charge code is active if it has been activated, but not closed."""
         # If the last item in the times list has only 1 entry,
         # we assume the code is still active.
