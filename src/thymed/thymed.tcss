@@ -29,7 +29,7 @@ Sidebar {
 }
 
 Sidebar:focus-within {
-    offset: 0 0 !important;
+    offset: 0 0;
 }
 
 Sidebar.-hidden {
@@ -81,7 +81,7 @@ OptionGroup {
 .option {
     margin: 1 1;
     height: 3;
-    background: $boost;
+    width: 75%;
     border: tall $panel;
     text-align: center;
 }
@@ -126,8 +126,9 @@ PunchForm {
 }
 
 PunchForm Button {
-    margin: 0 1;
-    width: 100%;
+    margin: 1 1;
+    width: 50%;
+    content-align: center middle;
 }
 
 PunchForm .label {

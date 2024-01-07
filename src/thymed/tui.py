@@ -10,6 +10,7 @@ import json
 from importlib.metadata import version
 from pathlib import Path
 
+import textual
 from rich.console import RenderableType
 from rich.table import Table
 from textual.app import App
@@ -64,11 +65,11 @@ class Sidebar(Container):
         yield Title("Menu")
         yield Static(SIDEBAR_INFO)
         yield OptionGroup(
-            Placeholder("Punch Screen", classes="option"),
-            Placeholder("ChargeCode Manager", classes="option"),
-            Placeholder("Reporting", classes="option"),
-            Placeholder("Admin Tools", classes="option"),
-            Placeholder("Settings", classes="option"),
+            Button("Punch Screen", classes="option punch", variant="success"),
+            Button("ChargeCode Manager", classes="option charge", variant="success"),
+            Button("Reporting", classes="option report", variant="success"),
+            Button("Admin Tools", classes="option admin", variant="success"),
+            Button("Settings", classes="option settings", variant="success"),
         )
         yield Static(LINKS)
         yield Version()
@@ -156,6 +157,21 @@ class ChargeManager(ScrollableContainer):
             classes="controls",
         )
 
+class UnderConstruction(Container):
+    """This feature is still WIP.
+
+    Still working on building this feature out. For now, we can show you
+    a structurally equivalent placeholder!
+    """
+    # Info is just a formatted version of the docstring.
+    info = (
+        __doc__.split("\n")[0]
+        + "\n"
+        + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
+    )
+    def compose(self) -> ComposeResult:
+        yield Title(":hammer_and_wrench: WIP :hammer_and_wrench:")
+
 
 class Body(Container):
     """The Body is a container in the app that has dynamic widgets inside.
@@ -182,7 +198,7 @@ class ThymedApp(App[None]):
         ("m", "toggle_sidebar", "Menu"),
         ("f1", "launch_punch", "Punch Screen"),
         ("f2", "launch_chargecode", "ChargeCode Manager"),
-        ("f3", "launch_reporting", "Reporting"),
+        ("f3", "launch_report", "Reporting"),
         ("f4", "launch_admin", "Admin Tools"),
         ("f12", "launch_settings", "Settings"),
         Binding("escape", "app.quit", "Quit", show=True),
@@ -206,6 +222,27 @@ class ThymedApp(App[None]):
         """This method 'launches' the chargecode manager applet."""
         self.query_one("#applet").remove()
         new = ChargeManager(id="applet")
+        self.query_one(InfoPane).info = new.info
+        self.query_one(Body).mount(new)
+
+    def action_launch_report(self) -> None:
+        """This method 'launches' the reporting applet."""
+        self.query_one("#applet").remove()
+        new = UnderConstruction(id="applet")
+        self.query_one(InfoPane).info = new.info
+        self.query_one(Body).mount(new)
+    
+    def action_launch_admin(self) -> None:
+        """This method 'launches' the admin applet."""
+        self.query_one("#applet").remove()
+        new = UnderConstruction(id="applet")
+        self.query_one(InfoPane).info = new.info
+        self.query_one(Body).mount(new)
+    
+    def action_launch_settings(self) -> None:
+        """This method 'launches' the settings applet."""
+        self.query_one("#applet").remove()
+        new = UnderConstruction(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
@@ -243,7 +280,8 @@ class ThymedApp(App[None]):
 
         self.notify(message, title=title, severity=severity)
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    @textual.on(Input.Submitted, "#chargecode")
+    def charge_submitted(self, event: Input.Submitted) -> None:
         """Event handler called when Input is submitted."""
         field = event.input
         if field.id == "chargecode":
@@ -251,13 +289,36 @@ class ThymedApp(App[None]):
             field.value = ""
             self.punch(id)
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    @textual.on(Button.Pressed, "#punch")
+    def punch_pressed(self, event: Button.Pressed) -> None:
         """Event handler called when Buttons are pressed."""
-        if event.button.id == "punch":
-            field = self.query_one("#chargecode")
-            id = field.value
-            field.value = ""
-            self.punch(id)
+        field = self.query_one("#chargecode")
+        id = field.value
+        field.value = ""
+        self.punch(id)
+
+    @textual.on(Button.Pressed, ".option")
+    def option_buttons(self, event: Button.Pressed) -> None:
+        """What to do when the option buttons are pressed."""
+        classes = event.button.classes
+        
+        if "punch" in classes:
+            self.action_toggle_sidebar()
+            self.action_launch_punch()
+        elif "charge" in classes:
+            self.action_toggle_sidebar()
+            self.action_launch_chargecode()
+        elif "report" in classes:
+            self.action_toggle_sidebar()
+            self.action_launch_report()
+        elif "admin" in classes:
+            self.action_toggle_sidebar()
+            self.action_launch_admin()
+        elif "settings" in classes:
+            self.action_toggle_sidebar()
+            self.action_launch_settings()
+
+                
 
     def action_open_link(self, link: str) -> None:
         self.app.bell()
