@@ -9,6 +9,7 @@ the dynamic sidebar of functions.
 import json
 from importlib.metadata import version
 from pathlib import Path
+from datetime import datetime
 
 import textual
 from rich.console import RenderableType
@@ -18,11 +19,15 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
 from textual.containers import ScrollableContainer
-from textual.containers import Vertical
+from textual.containers import Horizontal
+from textual.containers import Grid
+from textual.css.query import NoMatches
 from textual.reactive import reactive
+from textual.screen import ModalScreen
 from textual.widget import Widget
 from textual.widgets import Button
 from textual.widgets import DataTable
+from textual.widgets import Digits
 from textual.widgets import Footer
 from textual.widgets import Header
 from textual.widgets import Input
@@ -98,6 +103,7 @@ class PunchForm(Container):
     )
 
     def compose(self) -> ComposeResult:
+        yield Digits("", id="clock")
         yield Static("ChargeCode ID:", classes="label")
         yield Input(placeholder="123456", id="chargecode")
         yield Static()
@@ -157,6 +163,21 @@ class ChargeManager(ScrollableContainer):
             classes="controls",
         )
 
+
+class Settings(ScrollableContainer):
+    """View and change various settings relating to Thymed."""
+    # Info is just a formatted version of the docstring.
+    info = (
+        __doc__.split("\n")[0]
+        + "\n"
+        + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
+    )
+
+    def compose(self) -> ComposeResult:
+        for i in range(10):
+            yield Horizontal(Static("A settings switch"), Switch())
+
+
 class UnderConstruction(Container):
     """This feature is still WIP.
 
@@ -191,6 +212,24 @@ class Body(Container):
         yield self.applet
 
 
+# class QuitScreen(ModalScreen):
+#     """Screen with a dialog to quit."""
+
+#     def compose(self) -> ComposeResult:
+#         yield Grid(
+#             Static("Are you sure you want to quit?", id="question"),
+#             Button("Quit", variant="error", id="quit"),
+#             Button("Cancel", variant="primary", id="cancel"),
+#             id="dialog",
+#         )
+
+#     def on_button_pressed(self, event: Button.Pressed) -> None:
+#         if event.button.id == "quit":
+#             self.app.exit()
+#         else:
+#             self.app.pop_screen()
+
+
 class ThymedApp(App[None]):
     CSS_PATH = "thymed.tcss"
     TITLE = "Thymed App"
@@ -210,6 +249,20 @@ class ThymedApp(App[None]):
         yield Header(show_clock=True)
         yield Container(Sidebar(classes="-hidden"), Body())
         yield Footer()
+
+    def on_ready(self) -> None:
+        self.update_clock()
+        self.set_interval(1, self.update_clock)
+
+    def update_clock(self) -> None:
+        clock = datetime.now()
+        try:
+            self.query_one(Digits).update(f"{clock:%a %d %b %Y, %I:%M%p}")
+        except NoMatches:
+            # We build and destroy the clock with the active applet.
+            # A lot of the time it just doesn't exist, so ignore this.
+            pass
+            
 
     def action_launch_punch(self) -> None:
         """This method 'launches' the punch form applet."""
@@ -242,7 +295,7 @@ class ThymedApp(App[None]):
     def action_launch_settings(self) -> None:
         """This method 'launches' the settings applet."""
         self.query_one("#applet").remove()
-        new = UnderConstruction(id="applet")
+        new = Settings(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
@@ -318,7 +371,7 @@ class ThymedApp(App[None]):
             self.action_toggle_sidebar()
             self.action_launch_settings()
 
-                
+
 
     def action_open_link(self, link: str) -> None:
         self.app.bell()

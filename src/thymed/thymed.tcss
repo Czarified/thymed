@@ -81,7 +81,7 @@ OptionGroup {
 .option {
     margin: 1 1;
     height: 3;
-    width: 75%;
+    width: 100%;
     border: tall $panel;
     text-align: center;
 }
@@ -125,9 +125,9 @@ PunchForm {
     border: wide $background;
 }
 
-PunchForm Button {
+PunchForm > Button {
     margin: 1 1;
-    width: 50%;
+    width: 75%;
     content-align: center middle;
 }
 
@@ -137,13 +137,24 @@ PunchForm .label {
     color: mediumspringgreen;
 }
 
+#clock {
+    column-span: 2;
+    tint: darkgreen 20%;
+    text-align: center;
+}
+
 Message {
     margin: 0 1;
 
 }
 
-Tree {
-    margin: 1 0;
+Settings > Horizontal {
+    border: wide black;
+    height: 5;
+}
+
+Horizontal > Switch {
+    dock: right;
 }
 
 Window {
