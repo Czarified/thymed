@@ -13,6 +13,7 @@ from rich.table import Table
 from rich.traceback import install
 
 import thymed
+from thymed.tui import ThymedApp
 
 
 install()
@@ -163,6 +164,19 @@ def list():
         table.add_row(str(code.id), code.name, code.description, str(code.is_active))
 
     console.print(table)
+
+
+@main.command()
+def tui():
+    """Launch the TUI.
+
+    This command launches the Text User Interface (TUI).
+    While the commandline functions are quite efficient,
+    many users may prefer or need the TUI for interacting
+    with Thymed. It's quite robust and polished! Give it a try!
+    """
+    app = ThymedApp()
+    app.run()
 
 
 if __name__ == "__main__":

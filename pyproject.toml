@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "thymed"
-version = "0.3.0"
+version = "0.4.0"
 description = "Thymed"
 authors = ["Benjamin Crews <aceF22@gmail.com>"]
 license = "MIT"
@@ -52,6 +52,9 @@ myst-parser = {version = ">=0.16.1"}
 [tool.poetry.scripts]
 thymed = "thymed.__main__:main"
 punch = "thymed.__main__:punch_default"
+
+[tool.poetry.group.dev.dependencies]
+textual-dev = "^1.2.1"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]

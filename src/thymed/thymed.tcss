@@ -1,50 +1,65 @@
-HomePane {
-    layout: vertical;
+* {
+    transition: background 500ms in_out_cubic, color 500ms in_out_cubic;
+}
+
+Screen {
+    layers: base overlay notifications;
+    overflow: hidden;
+}
+
+
+Notification {
+    dock: bottom;
+    layer: notification;
+    width: auto;
+    margin: 2 4;
+    padding: 1 2;
+    background: $background;
+    color: $text;
+    height: auto;
+
+}
+
+Sidebar {
+    width: 40;
+    background: $panel;
+    transition: offset 500ms in_out_cubic;
+    layer: overlay;
+
+}
+
+Sidebar:focus-within {
+    offset: 0 0;
+}
+
+Sidebar.-hidden {
+    offset-x: -100%;
+}
+
+Sidebar Title {
+    background: $boost;
+    color: $secondary;
+    padding: 1 1;
+    border-right: vkey $background;
+    dock: top;
+    text-align: center;
+    text-style: bold;
+}
+
+ChargeManager Title {
+    background: $boost;
+    color: springgreen;
+    padding: 1 1;
+    border-right: vkey $background;
+    dock: top;
+    text-align: center;
+    text-style: bold underline;
+}
+
+.data {
+    background: $boost;
+    color: springgreen;
     content-align: center top;
-    background: $boost;
-    margin: 1;
-    min-width: 50;
-    padding: 0;
-}
-
-Thingy {
-    layout: horizontal;
-    background: $boost;
-    height: 5;
-    margin: 2;
-    padding: 1;
-}
-
-Stopwatch {
-    layout: horizontal;
-    background: $boost;
-    height: 5;
-    margin: 1;
-    min-width: 50;
-    padding: 1;
-}
-
-TimeDisplay {
-    content-align: center middle;
-    text-opacity: 60%;
-    height: 3;
-}
-
-Button {
-    width: 16;
-}
-
-#start {
-    dock: left;
-}
-
-#stop {
-    dock: left;
-    display: none;
-}
-
-#reset {
-    dock: right;
 }
 
 #add {
@@ -55,25 +70,134 @@ Button {
     dock: right;
 }
 
-
-.started {
-    text-style: bold;
-    background: $success;
+OptionGroup {
+    background: $boost;
     color: $text;
+    height: 1fr;
+    border-right: vkey $background;
 }
 
-.started TimeDisplay {
-    text-opacity: 100%;
+.option {
+    margin: 1 1;
+    height: 3;
+    width: 100%;
+    border: tall $panel;
+    text-align: center;
 }
 
-.started #start {
-    display: none
+#applet {
+    width: 1fr;
+    height: 4fr;
+    border: solid white;
+    background: $surface;
 }
 
-.started #stop {
-    display: block
+#info {
+    width: 1fr;
+    height: 1fr;
+    border: solid white;
+    background: $surface;
+    color: springgreen;
 }
 
-.started #reset {
-    visibility: hidden
+Screen>Container {
+    height: 100%;
+    overflow: hidden;
+}
+
+.pad {
+    margin: 1 0;
+}
+
+DataTable {
+    height: 16;
+    max-height: 16;
+}
+
+PunchForm {
+    height: auto;
+    padding: 1 2;
+    layout: grid;
+    grid-size: 2;
+    grid-rows: 4;
+    grid-columns: 20 1fr;
+    background: $boost;
+    border: wide $background;
+}
+
+PunchForm > Button {
+    margin: 1 1;
+    width: 75%;
+    content-align: center middle;
+}
+
+PunchForm .label {
+    padding: 1 2;
+    text-align: right;
+    color: mediumspringgreen;
+}
+
+#clock {
+    column-span: 2;
+    tint: darkgreen 20%;
+    text-align: center;
+}
+
+Message {
+    margin: 0 1;
+
+}
+
+Settings > Horizontal {
+    border: wide black;
+    height: 5;
+}
+
+Horizontal > Switch {
+    dock: right;
+}
+
+AddScreen {
+    align: center middle;
+}
+
+#dialog {
+    grid-size: 2;
+    grid-rows: 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-columns: 1fr 3fr;
+    padding: 0 1;
+    width: 70%;
+    height: 30;
+    border: thick $background 50%;
+    background: $surface;
+}
+
+#question {
+    column-span: 2;
+    height: 1fr;
+    width: 1fr;
+    color: mediumspringgreen;
+    content-align: center middle;
+}
+
+.right {
+    text-align: right;
+}
+
+Window {
+    background: $boost;
+    overflow: auto;
+    height: auto;
+    max-height: 16;
+}
+
+Window>Static {
+    width: auto;
+}
+
+Version {
+    color: $text-disabled;
+    dock: bottom;
+    text-align: center;
+    padding: 1;
 }
