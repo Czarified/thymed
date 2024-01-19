@@ -7,9 +7,8 @@ the dynamic sidebar of functions.
 """
 
 import json
-from importlib.metadata import version
-from pathlib import Path
 from datetime import datetime
+from importlib.metadata import version
 
 import textual
 from rich.console import RenderableType
@@ -18,15 +17,16 @@ from textual.app import App
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
-from textual.containers import ScrollableContainer
-from textual.containers import Horizontal
 from textual.containers import Grid
+from textual.containers import Horizontal
+from textual.containers import ScrollableContainer
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
+
+# from textual.widgets import DataTable
 from textual.widgets import Button
-from textual.widgets import DataTable
 from textual.widgets import Digits
 from textual.widgets import Footer
 from textual.widgets import Header
@@ -36,6 +36,9 @@ from textual.widgets import Static
 from textual.widgets import Switch
 
 import thymed
+
+
+# from pathlib import Path
 
 
 SIDEBAR_INFO = """
@@ -51,12 +54,22 @@ Here are some links, you can click these!
 [@click="app.open_link('https://github.com/czarified/thymed/blob/master/CONTRIBUTING.md')"]:heart: Contribute![/]
 """
 
+LOGO = """
+
+▀█▀ █░█ █▄█ █▀▄▀█ █▀▀ █▀▄ ░
+░█░ █▀█ ░█░ █░▀░█ ██▄ █▄▀ ▄
+"""
+
 
 class Title(Static):
+    """A title widget."""
+
     pass
 
 
 class OptionGroup(ScrollableContainer):
+    """A group for options."""
+
     pass
 
 
@@ -81,7 +94,9 @@ class Sidebar(Container):
 
 
 class InfoPane(Widget):
-    info = reactive("Placeholder Information")
+    """The information area at the top of the Body."""
+
+    info = reactive(LOGO)
 
     def render(self) -> str:
         return f"{self.info}"
@@ -158,14 +173,15 @@ class ChargeManager(ScrollableContainer):
         self.data = self.get_data()
         yield Static(self.data, classes="data")
         yield Container(
-            Button("Add", variant="success", classes="add"),
-            Button("Remove", variant="error", classes="remove"),
+            Button("Add", variant="success", id="add"),
+            Button("Remove", variant="error", id="remove"),
             classes="controls",
         )
 
 
 class Settings(ScrollableContainer):
     """View and change various settings relating to Thymed."""
+
     # Info is just a formatted version of the docstring.
     info = (
         __doc__.split("\n")[0]
@@ -174,7 +190,7 @@ class Settings(ScrollableContainer):
     )
 
     def compose(self) -> ComposeResult:
-        for i in range(10):
+        for _i in range(10):
             yield Horizontal(Static("A settings switch"), Switch())
 
 
@@ -184,12 +200,14 @@ class UnderConstruction(Container):
     Still working on building this feature out. For now, we can show you
     a structurally equivalent placeholder!
     """
+
     # Info is just a formatted version of the docstring.
     info = (
         __doc__.split("\n")[0]
         + "\n"
         + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
     )
+
     def compose(self) -> ComposeResult:
         yield Title(":hammer_and_wrench: WIP :hammer_and_wrench:")
 
@@ -212,22 +230,36 @@ class Body(Container):
         yield self.applet
 
 
-# class QuitScreen(ModalScreen):
-#     """Screen with a dialog to quit."""
+class AddScreen(ModalScreen):
+    """Screen with a dialog to add a ChargeCode."""
 
-#     def compose(self) -> ComposeResult:
-#         yield Grid(
-#             Static("Are you sure you want to quit?", id="question"),
-#             Button("Quit", variant="error", id="quit"),
-#             Button("Cancel", variant="primary", id="cancel"),
-#             id="dialog",
-#         )
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Title("Add new ChargeCode information", id="question"),
+            Static("ID Number: ", classes="right"),
+            Input(placeholder="123456", id="charge_id"),
+            Static("Name: ", classes="right"),
+            Input(placeholder="Name", id="charge_name"),
+            Static("Description: ", classes="right"),
+            Input(placeholder="Description", id="charge_description", classes="long"),
+            Static(),
+            Static(
+                "Note: After submitting, you need to reload the Manager screen to see your new ChargeCode (Hit F2)."
+            ),
+            Button("Submit", variant="success", id="submit"),
+            Button("Cancel", variant="primary", id="cancel"),
+            id="dialog",
+        )
 
-#     def on_button_pressed(self, event: Button.Pressed) -> None:
-#         if event.button.id == "quit":
-#             self.app.exit()
-#         else:
-#             self.app.pop_screen()
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        charge_id = self.query_one("#charge_id").value
+        charge_name = self.query_one("#charge_name").value
+        charge_description = self.query_one("#charge_description").value
+        data = [charge_id, charge_name, charge_description]
+        if event.button.id == "submit":
+            self.dismiss(data)
+        else:
+            self.app.pop_screen()
 
 
 class ThymedApp(App[None]):
@@ -262,7 +294,6 @@ class ThymedApp(App[None]):
             # We build and destroy the clock with the active applet.
             # A lot of the time it just doesn't exist, so ignore this.
             pass
-            
 
     def action_launch_punch(self) -> None:
         """This method 'launches' the punch form applet."""
@@ -284,14 +315,14 @@ class ThymedApp(App[None]):
         new = UnderConstruction(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
-    
+
     def action_launch_admin(self) -> None:
         """This method 'launches' the admin applet."""
         self.query_one("#applet").remove()
         new = UnderConstruction(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
-    
+
     def action_launch_settings(self) -> None:
         """This method 'launches' the settings applet."""
         self.query_one("#applet").remove()
@@ -326,7 +357,7 @@ class ThymedApp(App[None]):
             status_post = "Active" if code.is_active else "Inactive"
             message = f"Punching Charge: {id}, {code.name}.\nFrom {status_pre} to {status_post}"
             severity = "information"
-        except KeyError as error:
+        except KeyError:
             # If things don't work notify the user to try again.
             message = f"Cannot find the charge code with id: {id}"
             severity = "error"
@@ -339,22 +370,24 @@ class ThymedApp(App[None]):
         field = event.input
         if field.id == "chargecode":
             id = event.value
-            field.value = ""
-            self.punch(id)
+            if id != "":
+                field.value = ""
+                self.punch(id)
 
     @textual.on(Button.Pressed, "#punch")
     def punch_pressed(self, event: Button.Pressed) -> None:
         """Event handler called when Buttons are pressed."""
         field = self.query_one("#chargecode")
         id = field.value
-        field.value = ""
-        self.punch(id)
+        if id != "":
+            field.value = ""
+            self.punch(id)
 
     @textual.on(Button.Pressed, ".option")
     def option_buttons(self, event: Button.Pressed) -> None:
         """What to do when the option buttons are pressed."""
         classes = event.button.classes
-        
+
         if "punch" in classes:
             self.action_toggle_sidebar()
             self.action_launch_punch()
@@ -371,7 +404,32 @@ class ThymedApp(App[None]):
             self.action_toggle_sidebar()
             self.action_launch_settings()
 
+    @textual.on(Button.Pressed, "#add")
+    def code_screen(self, event: Button.Pressed):
+        """When we want to add a chargecode.
 
+        When the AddScreen is dismissed, it will call the
+        callback function below.
+        """
+
+        def add_code(data: list):
+            """Method to actually build a ChargeCode object.
+
+            This method gets called after the AddScreen is dismissed.
+            It takes data and calls the base Thymed methods to build
+            a ChargeCode object, then write it to the database.
+
+            After we finish adding the code, we call get_data on
+            the ChargeManager screen to refresh the table.
+            """
+            id, name, description = data
+            charge = thymed.ChargeCode(name, description, int(id))
+            charge.write_class()
+
+            applet = self.query_one("#applet")
+            applet.data = applet.get_data()
+
+        self.push_screen(AddScreen(), add_code)
 
     def action_open_link(self, link: str) -> None:
         self.app.bell()
