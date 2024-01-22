@@ -7,7 +7,7 @@ the dynamic sidebar of functions.
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from importlib.metadata import version
 
 import textual
@@ -23,19 +23,23 @@ from textual.containers import ScrollableContainer
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widget import Widget
 
-# from textual.widgets import DataTable
+from textual.widget import Widget
+from textual.widgets import DataTable
 from textual.widgets import Button
 from textual.widgets import Digits
 from textual.widgets import Footer
 from textual.widgets import Header
 from textual.widgets import Input
 from textual.widgets import Placeholder
+from textual.widgets import Rule
 from textual.widgets import Static
 from textual.widgets import Switch
 
+from textual_plotext import PlotextPlot
+
 import thymed
+from thymed import TimeCard
 
 
 # from pathlib import Path
@@ -175,7 +179,90 @@ class ChargeManager(ScrollableContainer):
         yield Container(
             Button("Add", variant="success", id="add"),
             Button("Remove", variant="error", id="remove"),
-            classes="controls",
+            classes="controls"
+        )
+
+
+class Reporting(Container):
+    """Reporting functionality.
+
+    This applet can pull a TimeCard for a given ChargeCode.
+    Simply select the desired ChargeCode from the datatable
+    and the graph will update automatically. The reporting period
+    can be modified via the toggle button (current period graphed
+    is written in the button). Results can also be exported for
+    long term storage or additional processing.
+    """
+    # Info is just a formatted version of the docstring.
+    info = (
+        __doc__.split("\n")[0]
+        + "\n"
+        + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
+    )
+
+    code: reactive[str | None] = reactive(0)
+    name: reactive[str | None] = reactive(None)
+    delta: reactive[timedelta] = reactive(timedelta(days=7))
+    codes = reactive(DataTable(name="ChargeCodes"))
+    plot = reactive(None)
+
+
+    def get_codes(self) -> Table:
+        """Function to retrieve Thymed data."""
+        self.codes.clear()
+        self.codes.add_columns("ID", "NAME")
+        
+        with open(thymed._CHARGES) as f:
+            try:
+                codes = json.load(f, object_hook=thymed.object_decoder)
+
+                # Sort the codes dictionary by key (code id)
+                sorted_codes = sorted(codes.items(), key=lambda kv: int(kv[0]))
+                codes = [x[1] for x in sorted_codes]
+            except json.JSONDecodeError:  # pragma: no cover
+                self.notify("Got JSON Error", severity="error")
+                # If the file is completely blank, we will get an error
+                codes = dict()
+        
+        for code in codes:
+            self.codes.add_row(str(code.id), code.name)
+
+    def on_mount(self):
+        """Initialize the plot."""
+        self.plot = self.query_one(PlotextPlot)
+        plt = self.plot.plt
+        y = plt.sin() # sinusoidal test signal
+        plt.scatter(y)
+        plt.title("Scatter Plot")
+
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        """What to do when a new row is selected."""
+        id, name = event.data_table.get_row(event.row_key)
+        self.code = int(id)
+        self.name = name
+        card = TimeCard(self.code)
+        start = datetime.today()
+        end = start - self.delta
+        df = card.general_report(start, end)
+
+        plt = self.plot.plt
+        plt.scatter(list(df.clock_in), df.duration)
+        plt.title(self.name)
+
+
+    def compose(self) -> ComposeResult:
+        self.get_codes()
+        self.codes.cursor_type = "row"
+        yield Grid(
+            PlotextPlot(), self.codes,
+            Placeholder(self.name),
+            Container(
+                # Title("Period"), Rule(),
+                Button("Period"),
+                Static(),
+                Button("Export", variant="success")
+            )
         )
 
 
@@ -312,7 +399,7 @@ class ThymedApp(App[None]):
     def action_launch_report(self) -> None:
         """This method 'launches' the reporting applet."""
         self.query_one("#applet").remove()
-        new = UnderConstruction(id="applet")
+        new = Reporting(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
