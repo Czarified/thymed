@@ -12,6 +12,7 @@ from datetime import timedelta
 from importlib.metadata import version
 from itertools import cycle
 
+# import pandas as pd
 import textual
 from rich.console import RenderableType
 from rich.table import Table
@@ -26,6 +27,8 @@ from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
+
+# from textual.widgets import Rule
 from textual.widgets import Button
 from textual.widgets import DataTable
 from textual.widgets import Digits
@@ -33,7 +36,6 @@ from textual.widgets import Footer
 from textual.widgets import Header
 from textual.widgets import Input
 from textual.widgets import Placeholder
-from textual.widgets import Rule
 from textual.widgets import Static
 from textual.widgets import Switch
 from textual_plotext import PlotextPlot
@@ -222,7 +224,7 @@ class Reporting(Container):
 
     code: reactive[str | None] = reactive(0)
     name: reactive[str | None] = reactive(None)
-    delta: reactive[timedelta] = reactive(timedelta(days=7))
+    delta: reactive[timedelta] = reactive(timedelta(days=35))
     codes = reactive(DataTable(name="ChargeCodes"))
     plot = reactive(None, recompose=True)
 
@@ -259,23 +261,49 @@ class Reporting(Container):
         id, name = event.data_table.get_row(event.row_key)
         self.code = int(id)
         self.name = name
-        card = TimeCard(self.code)
-        start = datetime.today()
-        end = start - self.delta
-        df = card.general_report(start, end)
+        self.replot()
 
+    def replot(self) -> None:
+        """Call whenever we need to redo the plot."""
         plt = self.plot.plt
+        card = TimeCard(self.code)
+        end = datetime.today()
+        start = end - self.delta
+        df = card.general_report(start, end)
+        df["clock_in_day"] = df.clock_in.dt.strftime("%d/%m/%Y")
+        # TODO: Make the plot show an exact range, whether or not work entries are present. (Create a PR later.)
+        # Create a new date range with daily increments over the full range.
+        # The punches increments are variable (eg you may not work every day)
+        # new_clock_in_day = pd.date_range(start, end)
+        # Reindex the dataframe on the new range, filling blanks with an int of zero.
+        # df = df.set_index("clock_in_day").reindex(new_clock_in_day, fill_value=0).reset_index()
+        # Need to convert the clock_in to string for plotext
+        dates = df.clock_in_day
         plt.clear_data()
-        plt.scatter(list(df.clock_in), df.duration)
+        plt.bar(dates, df.hours)
         plt.title(self.name)
+        plt.xlabel("Date")
+        plt.ylabel("Hours")
         self.plot.refresh()
 
     @textual.on(Button.Pressed, "#period")
     def cycle_period(self) -> None:
         """Change the timedelta period."""
         stats = self.query_one(Statblock)
-        period = next(PERIODS)[0]
+        period, delta = next(PERIODS)
         stats.period = period
+        self.delta = delta
+        self.replot()
+
+    @textual.on(Button.Pressed, "#export")
+    def write_excel(self) -> None:
+        """Exports the data to an excel workbook."""
+        card = TimeCard(self.code)
+        end = datetime.today()
+        start = end - self.delta
+        df = card.general_report(start, end)
+        df.to_excel(f"timecard_{self.name}.xlsx")
+        df.to_csv(f"timecard_{self.name}.csv")
 
     def compose(self) -> ComposeResult:
         self.get_codes()
@@ -289,7 +317,7 @@ class Reporting(Container):
                 # Title("Period"), Rule(),
                 Button("Period", id="period"),
                 Static(),
-                Button("Export", variant="success"),
+                Button("Export", variant="success", id="export"),
             ),
         )
 
