@@ -7,8 +7,10 @@ the dynamic sidebar of functions.
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from importlib.metadata import version
+from itertools import cycle
 
 import textual
 from rich.console import RenderableType
@@ -23,10 +25,9 @@ from textual.containers import ScrollableContainer
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-
 from textual.widget import Widget
-from textual.widgets import DataTable
 from textual.widgets import Button
+from textual.widgets import DataTable
 from textual.widgets import Digits
 from textual.widgets import Footer
 from textual.widgets import Header
@@ -35,7 +36,6 @@ from textual.widgets import Placeholder
 from textual.widgets import Rule
 from textual.widgets import Static
 from textual.widgets import Switch
-
 from textual_plotext import PlotextPlot
 
 import thymed
@@ -63,6 +63,16 @@ LOGO = """
 ▀█▀ █░█ █▄█ █▀▄▀█ █▀▀ █▀▄ ░
 ░█░ █▀█ ░█░ █░▀░█ ██▄ █▄▀ ▄
 """
+
+PERIODS = cycle(
+    (
+        ("Week", timedelta(days=7)),
+        ("BiWeek", timedelta(days=14)),
+        ("Month", timedelta(days=30)),
+        ("Quarter", timedelta(days=90)),
+        ("Year", timedelta(days=365)),
+    )
+)
 
 
 class Title(Static):
@@ -179,8 +189,17 @@ class ChargeManager(ScrollableContainer):
         yield Container(
             Button("Add", variant="success", id="add"),
             Button("Remove", variant="error", id="remove"),
-            classes="controls"
+            classes="controls",
         )
+
+
+class Statblock(Container):
+    """A Block of statistics."""
+
+    period: reactive[str | None] = reactive("Period", recompose=True)
+
+    def compose(self) -> ComposeResult:
+        yield Static(self.period)
 
 
 class Reporting(Container):
@@ -193,6 +212,7 @@ class Reporting(Container):
     is written in the button). Results can also be exported for
     long term storage or additional processing.
     """
+
     # Info is just a formatted version of the docstring.
     info = (
         __doc__.split("\n")[0]
@@ -204,14 +224,13 @@ class Reporting(Container):
     name: reactive[str | None] = reactive(None)
     delta: reactive[timedelta] = reactive(timedelta(days=7))
     codes = reactive(DataTable(name="ChargeCodes"))
-    plot = reactive(None)
-
+    plot = reactive(None, recompose=True)
 
     def get_codes(self) -> Table:
         """Function to retrieve Thymed data."""
         self.codes.clear()
         self.codes.add_columns("ID", "NAME")
-        
+
         with open(thymed._CHARGES) as f:
             try:
                 codes = json.load(f, object_hook=thymed.object_decoder)
@@ -223,7 +242,7 @@ class Reporting(Container):
                 self.notify("Got JSON Error", severity="error")
                 # If the file is completely blank, we will get an error
                 codes = dict()
-        
+
         for code in codes:
             self.codes.add_row(str(code.id), code.name)
 
@@ -231,10 +250,9 @@ class Reporting(Container):
         """Initialize the plot."""
         self.plot = self.query_one(PlotextPlot)
         plt = self.plot.plt
-        y = plt.sin() # sinusoidal test signal
+        y = plt.sin()  # sinusoidal test signal
         plt.scatter(y)
         plt.title("Scatter Plot")
-
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected):
         """What to do when a new row is selected."""
@@ -247,22 +265,32 @@ class Reporting(Container):
         df = card.general_report(start, end)
 
         plt = self.plot.plt
+        plt.clear_data()
         plt.scatter(list(df.clock_in), df.duration)
         plt.title(self.name)
+        self.plot.refresh()
 
+    @textual.on(Button.Pressed, "#period")
+    def cycle_period(self) -> None:
+        """Change the timedelta period."""
+        stats = self.query_one(Statblock)
+        period = next(PERIODS)[0]
+        stats.period = period
 
     def compose(self) -> ComposeResult:
         self.get_codes()
         self.codes.cursor_type = "row"
         yield Grid(
-            PlotextPlot(), self.codes,
-            Placeholder(self.name),
+            PlotextPlot(),
+            self.codes,
+            # Placeholder(self.name),
+            Statblock(),
             Container(
                 # Title("Period"), Rule(),
-                Button("Period"),
+                Button("Period", id="period"),
                 Static(),
-                Button("Export", variant="success")
-            )
+                Button("Export", variant="success"),
+            ),
         )
 
 
