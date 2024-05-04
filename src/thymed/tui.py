@@ -199,11 +199,16 @@ class ChargeManager(ScrollableContainer):
 class Statblock(Container):
     """A Block of statistics."""
 
-    data: reactive = reactive(None, recompose=True)
+    timecard: reactive[TimeCard | None] = reactive(None, recompose=True)
     period: reactive[str | None] = reactive("Period", recompose=True)
+    delta: reactive[timedelta | None] = reactive(timedelta(days=7), recompose=True)
 
     def compose(self) -> ComposeResult:
-        yield Static(self.period)
+        # end = datetime.today()
+        # start = end - self.period
+        # self.data = self.timecard.general_report(start, end)
+        yield Static(f"Period = {self.period}")
+        yield Static(f"Days = {self.delta.days}")
 
 
 class Reporting(Container):
@@ -224,6 +229,7 @@ class Reporting(Container):
         + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
     )
 
+    # TODO: Initialize the code to be the Thymed default code option.
     code: reactive[str | None] = reactive(0)
     name: reactive[str | None] = reactive(None)
     delta: reactive[timedelta] = reactive(timedelta(days=35))
@@ -297,6 +303,7 @@ class Reporting(Container):
         stats = self.query_one(Statblock)
         period, delta = next(PERIODS)
         stats.period = period
+        stats.delta = delta
         self.delta = delta
         self.replot()
 
@@ -318,7 +325,7 @@ class Reporting(Container):
             PlotextPlot(),
             self.codes,
             # Placeholder(self.name),
-            Statblock(),
+            Statblock(TimeCard(self.code)),
             Container(
                 # Title("Period"), Rule(),
                 Button("Period", id="period"),
