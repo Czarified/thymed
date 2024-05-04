@@ -199,6 +199,7 @@ class ChargeManager(ScrollableContainer):
 class Statblock(Container):
     """A Block of statistics."""
 
+    data: reactive = reactive(None, recompose=True)
     period: reactive[str | None] = reactive("Period", recompose=True)
 
     def compose(self) -> ComposeResult:
@@ -231,7 +232,10 @@ class Reporting(Container):
 
     def get_codes(self) -> Table:
         """Function to retrieve Thymed data."""
-        self.codes.clear()
+        # WTF does clear even do??
+        # I need to hard reset it to get the behavior I want.
+        self.codes.clear(columns=True)
+        self.codes = DataTable(name="ChargeCodes")
         self.codes.add_columns("ID", "NAME")
 
         with open(thymed._CHARGES) as f:
