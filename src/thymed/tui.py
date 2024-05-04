@@ -11,6 +11,7 @@ from datetime import datetime
 from datetime import timedelta
 from importlib.metadata import version
 from itertools import cycle
+from pathlib import Path
 
 # import pandas as pd
 import textual
@@ -304,6 +305,7 @@ class Reporting(Container):
         df = card.general_report(start, end)
         df.to_excel(f"timecard_{self.name}.xlsx")
         df.to_csv(f"timecard_{self.name}.csv")
+        self.notify(f"Exported {self.name} to {Path.cwd()}", title="Export")
 
     def compose(self) -> ComposeResult:
         self.get_codes()
