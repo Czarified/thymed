@@ -135,13 +135,13 @@ def fake_times(
 # # #      T E S T S     # # #
 
 
-def test_create():
+def test_create() -> None:
     """If a ChargeCode can be created."""
     the_code = ChargeCode("test_code", "description", 0)
     assert not the_code.is_active
 
 
-def test_punch(blank_code):
+def test_punch(blank_code) -> None:
     """Punches a charge code, sees active. Punches again, sees inactive."""
     blank_code.punch()
     assert blank_code.is_active
@@ -150,7 +150,7 @@ def test_punch(blank_code):
     assert not blank_code.is_active
 
 
-def test_data(blank_code):
+def test_data(blank_code) -> None:
     """Write some data, and instantiate a code that recognizes the times."""
     blank_code.punch()
     time.sleep(0.1)
@@ -164,7 +164,7 @@ def test_data(blank_code):
     remove_test_data("99999998")
 
 
-def test_multiple():
+def test_multiple() -> None:
     """Make multiple for post_init checks."""
     one = ChargeCode("One", "Tester 1, Tester One.", 1)
     one.write_class()
@@ -178,7 +178,7 @@ def test_multiple():
     remove_test_charge("2")
 
 
-def test_fake_time(fake_times, blank_code):
+def test_fake_time(fake_times, blank_code) -> None:
     """Build some real data to work with."""
     blank_code.punch()
     time.sleep(0.1)
