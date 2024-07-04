@@ -50,7 +50,7 @@ from thymed import TimeCard
 
 SIDEBAR_INFO = """
 There are multiple tools available in Thymed. To use one, select it or hit the keybinding. The main area will be updated with the 'applet' along with some more information. :smiley:
-"""
+"""     # noqa: B950
 
 LINKS = """
 Here are some links, you can click these!
@@ -180,7 +180,10 @@ class ChargeManager(ScrollableContainer):
 
         for code in codes:
             table.add_row(
-                str(code.id), code.name, code.description, str(code.is_active)
+                str(code.id),
+                code.name,
+                code.description,
+                str(code.is_active)
             )
 
         return table
