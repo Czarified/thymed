@@ -16,11 +16,11 @@ classifiers = [
 Changelog = "https://github.com/czarified/thymed/releases"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.9,<4.0"
 click = ">=8.0.1"
 toml = "^0.10.2"
 rich = ">12.5.1"
-pandas = ">2.0.0"
+pandas = ">2.2.0"
 openpyxl = "^3.0.10"
 textual = ">0.38.1"
 textual-plotext = "^0.2.1"
