@@ -12,7 +12,8 @@ from textual.app import App
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.containers import ScrollableContainer
-from textual.reactive import reactive, var
+from textual.reactive import reactive
+from textual.reactive import var
 from textual.widget import Widget
 from textual.widgets import Button
 from textual.widgets import DataTable
@@ -50,7 +51,7 @@ class TimeDisplay(Static):
     time = reactive(0.0)
     total = reactive(0.0)
     name = reactive("name")
-    
+
     def on_mount(self) -> None:
         """Event handler called when widget is added to the app."""
         self.update_timer = self.set_interval(1 / 60, self.update_time, pause=True)
@@ -81,6 +82,7 @@ class TimeDisplay(Static):
         self.total = 0
         self.time = 0
 
+
 class Stopwatch(Static):
     """A stopwatch widget."""
 
@@ -108,13 +110,16 @@ class Stopwatch(Static):
         yield Button("Reset", id="reset")
         yield display
 
+
 class ReactiveTitle(Widget):
     """A Reactive Title that changes based on the selected DataTable row."""
+
     name: reactive[str | None] = reactive("This is a title.")
     sub: reactive[str | None] = reactive("Description.")
 
     def render(self) -> str:
         return f"{self.name}\n{self.sub}"
+
 
 class Thingy(Static):
     """This thingy has a couple buttons to add and remove stopwatches."""
@@ -146,7 +151,9 @@ class HomePane(Container):
     def compose(self) -> ComposeResult:
         """Compose."""
         self.name_widget = Static("Thymed.\n")
-        self.table_title_widget = Static("ChargeCodes in Current Database:", classes="title")
+        self.table_title_widget = Static(
+            "ChargeCodes in Current Database:", classes="title"
+        )
         yield self.name_widget
         yield self.table_title_widget
         yield DataTable()
