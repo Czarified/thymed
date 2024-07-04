@@ -115,11 +115,10 @@ DataTable {
 }
 
 PunchForm {
-    height: auto;
-    padding: 1 2;
+    padding: 1 1;
     layout: grid;
     grid-size: 2;
-    grid-rows: 4;
+    grid-rows: 5;
     grid-columns: 20 1fr;
     background: $boost;
     border: wide $background;
@@ -182,6 +181,18 @@ AddScreen {
 
 .right {
     text-align: right;
+}
+
+Reporting > Grid {
+    grid-size: 2;
+    grid-rows: 2fr 1fr;
+    grid-columns: 3fr 1fr;
+    padding: 0 0;
+}
+
+Reporting Container {
+    align: center top;
+    content-align: center top;
 }
 
 Window {

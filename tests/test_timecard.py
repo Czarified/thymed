@@ -219,6 +219,6 @@ if __name__ == "__main__":  # pragma: no cover
         my_code.write_class()
         my_code.write_json()
 
-    make_times(name="Project Delta", description="Work on project Delta.", id=103)
-    make_times(name="Project Epsilon", description="Work on project Epsilon.", id=104)
-    make_times(name="Project Zeta", description="Work on project Zeta.", id=105)
+    make_times(name="Project Alpha", description="Work on project Alpha.", id=103)
+    make_times(name="Project Beta", description="Work on project Beta.", id=104)
+    make_times(name="Project Gamma", description="Work on project Gamma.", id=105)

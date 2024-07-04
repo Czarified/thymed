@@ -8,8 +8,12 @@ the dynamic sidebar of functions.
 
 import json
 from datetime import datetime
+from datetime import timedelta
 from importlib.metadata import version
+from itertools import cycle
+from pathlib import Path
 
+# import pandas as pd
 import textual
 from rich.console import RenderableType
 from rich.table import Table
@@ -25,8 +29,9 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
 
-# from textual.widgets import DataTable
+# from textual.widgets import Rule
 from textual.widgets import Button
+from textual.widgets import DataTable
 from textual.widgets import Digits
 from textual.widgets import Footer
 from textual.widgets import Header
@@ -34,8 +39,10 @@ from textual.widgets import Input
 from textual.widgets import Placeholder
 from textual.widgets import Static
 from textual.widgets import Switch
+from textual_plotext import PlotextPlot
 
 import thymed
+from thymed import TimeCard
 
 
 # from pathlib import Path
@@ -59,6 +66,16 @@ LOGO = """
 ▀█▀ █░█ █▄█ █▀▄▀█ █▀▀ █▀▄ ░
 ░█░ █▀█ ░█░ █░▀░█ ██▄ █▄▀ ▄
 """
+
+PERIODS = cycle(
+    (
+        ("Week", timedelta(days=7)),
+        ("BiWeek", timedelta(days=14)),
+        ("Month", timedelta(days=30)),
+        ("Quarter", timedelta(days=90)),
+        ("Year", timedelta(days=365)),
+    )
+)
 
 
 class Title(Static):
@@ -176,6 +193,145 @@ class ChargeManager(ScrollableContainer):
             Button("Add", variant="success", id="add"),
             Button("Remove", variant="error", id="remove"),
             classes="controls",
+        )
+
+
+class Statblock(Container):
+    """A Block of statistics."""
+
+    timecard: reactive[TimeCard | None] = reactive(None, recompose=True)
+    period: reactive[str | None] = reactive("Period", recompose=True)
+    delta: reactive[timedelta | None] = reactive(timedelta(days=7), recompose=True)
+
+    def compose(self) -> ComposeResult:
+        # end = datetime.today()
+        # start = end - self.period
+        # self.data = self.timecard.general_report(start, end)
+        yield Static(f"Period = {self.period}")
+        yield Static(f"Days = {self.delta.days}")
+
+
+class Reporting(Container):
+    """Reporting functionality.
+
+    This applet can pull a TimeCard for a given ChargeCode.
+    Simply select the desired ChargeCode from the datatable
+    and the graph will update automatically. The reporting period
+    can be modified via the toggle button (current period graphed
+    is written in the button). Results can also be exported for
+    long term storage or additional processing.
+    """
+
+    # Info is just a formatted version of the docstring.
+    info = (
+        __doc__.split("\n")[0]
+        + "\n"
+        + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
+    )
+
+    # TODO: Initialize the code to be the Thymed default code option.
+    code: reactive[str | None] = reactive(0)
+    name: reactive[str | None] = reactive(None)
+    delta: reactive[timedelta] = reactive(timedelta(days=35))
+    codes = reactive(DataTable(name="ChargeCodes"))
+    plot = reactive(None, recompose=True)
+
+    def get_codes(self) -> Table:
+        """Function to retrieve Thymed data."""
+        # WTF does clear even do??
+        # I need to hard reset it to get the behavior I want.
+        self.codes.clear(columns=True)
+        self.codes = DataTable(name="ChargeCodes")
+        self.codes.add_columns("ID", "NAME")
+
+        with open(thymed._CHARGES) as f:
+            try:
+                codes = json.load(f, object_hook=thymed.object_decoder)
+
+                # Sort the codes dictionary by key (code id)
+                sorted_codes = sorted(codes.items(), key=lambda kv: int(kv[0]))
+                codes = [x[1] for x in sorted_codes]
+            except json.JSONDecodeError:  # pragma: no cover
+                self.notify("Got JSON Error", severity="error")
+                # If the file is completely blank, we will get an error
+                codes = dict()
+
+        for code in codes:
+            self.codes.add_row(str(code.id), code.name)
+
+    def on_mount(self):
+        """Initialize the plot."""
+        self.plot = self.query_one(PlotextPlot)
+        plt = self.plot.plt
+        y = plt.sin()  # sinusoidal test signal
+        plt.scatter(y)
+        plt.title("Scatter Plot")
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        """What to do when a new row is selected."""
+        id, name = event.data_table.get_row(event.row_key)
+        self.code = int(id)
+        self.name = name
+        self.replot()
+
+    def replot(self) -> None:
+        """Call whenever we need to redo the plot."""
+        plt = self.plot.plt
+        card = TimeCard(self.code)
+        end = datetime.today()
+        start = end - self.delta
+        df = card.general_report(start, end)
+        df["clock_in_day"] = df.clock_in.dt.strftime("%d/%m/%Y")
+        # TODO: Make the plot show an exact range, whether or not work entries are present. (Create a PR later.)
+        # Create a new date range with daily increments over the full range.
+        # The punches increments are variable (eg you may not work every day)
+        # new_clock_in_day = pd.date_range(start, end)
+        # Reindex the dataframe on the new range, filling blanks with an int of zero.
+        # df = df.set_index("clock_in_day").reindex(new_clock_in_day, fill_value=0).reset_index()
+        # Need to convert the clock_in to string for plotext
+        dates = df.clock_in_day
+        plt.clear_data()
+        plt.bar(dates, df.hours)
+        plt.title(self.name)
+        plt.xlabel("Date")
+        plt.ylabel("Hours")
+        self.plot.refresh()
+
+    @textual.on(Button.Pressed, "#period")
+    def cycle_period(self) -> None:
+        """Change the timedelta period."""
+        stats = self.query_one(Statblock)
+        period, delta = next(PERIODS)
+        stats.period = period
+        stats.delta = delta
+        self.delta = delta
+        self.replot()
+
+    @textual.on(Button.Pressed, "#export")
+    def write_excel(self) -> None:
+        """Exports the data to an excel workbook."""
+        card = TimeCard(self.code)
+        end = datetime.today()
+        start = end - self.delta
+        df = card.general_report(start, end)
+        df.to_excel(f"timecard_{self.name}.xlsx")
+        df.to_csv(f"timecard_{self.name}.csv")
+        self.notify(f"Exported {self.name} to {Path.cwd()}", title="Export")
+
+    def compose(self) -> ComposeResult:
+        self.get_codes()
+        self.codes.cursor_type = "row"
+        yield Grid(
+            PlotextPlot(),
+            self.codes,
+            # Placeholder(self.name),
+            Statblock(TimeCard(self.code)),
+            Container(
+                # Title("Period"), Rule(),
+                Button("Period", id="period"),
+                Static(),
+                Button("Export", variant="success", id="export"),
+            ),
         )
 
 
@@ -312,7 +468,7 @@ class ThymedApp(App[None]):
     def action_launch_report(self) -> None:
         """This method 'launches' the reporting applet."""
         self.query_one("#applet").remove()
-        new = UnderConstruction(id="applet")
+        new = Reporting(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
