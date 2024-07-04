@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 import click
-import pkg_resources
+from importlib.metadata import version
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm
@@ -20,7 +20,7 @@ from thymed.tui import ThymedApp
 install()
 
 
-__version__ = pkg_resources.get_distribution("thymed").version
+__version__ = version(thymed)
 
 
 @click.group()
