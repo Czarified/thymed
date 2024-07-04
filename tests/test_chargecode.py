@@ -1,4 +1,5 @@
 """Test Cases for the ChargeCode class."""
+
 import datetime as dt
 import json
 import random

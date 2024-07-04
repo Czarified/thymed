@@ -3,6 +3,7 @@
 The Text User Interface is all created, managed,
 and tested with Textual.
 """
+
 import json
 from time import monotonic
 

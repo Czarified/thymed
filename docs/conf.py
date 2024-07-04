@@ -1,4 +1,5 @@
 """Sphinx configuration."""
+
 project = "Thymed"
 author = "Benjamin Crews"
 copyright = "2022, Benjamin Crews"

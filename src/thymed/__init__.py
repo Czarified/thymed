@@ -4,7 +4,6 @@ This file contains basic functions and classes
 related to to time-keeping.
 """
 
-
 import datetime as dt
 import json
 from copy import copy
