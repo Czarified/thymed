@@ -20,7 +20,7 @@ from thymed.tui import ThymedApp
 install()
 
 
-__version__ = version(thymed)
+__version__ = version("thymed")
 
 
 @click.group()
