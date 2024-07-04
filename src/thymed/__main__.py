@@ -1,10 +1,10 @@
 """Command-line interface."""
 
 import json
+from importlib.metadata import version
 from typing import Any
 
 import click
-from importlib.metadata import version
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm
