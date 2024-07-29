@@ -2439,13 +2439,13 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.7
 
 [[package]]
 name = "textual"
-version = "0.71.0"
+version = "0.74.0"
 description = "Modern Text User Interface framework"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = "<4.0.0,>=3.8.1"
 files = [
-    {file = "textual-0.71.0-py3-none-any.whl", hash = "sha256:60500cc63ffd98a4aff8679976a1530d5e99a881e13bb040d26558a2c45f49d8"},
-    {file = "textual-0.71.0.tar.gz", hash = "sha256:a38a3bd7e450ed173b59ab1c93a3aa8174d95bc5c79647f220a50243236ce70a"},
+    {file = "textual-0.74.0-py3-none-any.whl", hash = "sha256:69b18904d11400e586274deb1270f5db7b4254a2ac00fe805f23b16c324345e4"},
+    {file = "textual-0.74.0.tar.gz", hash = "sha256:808c4e8727283ef84a123620449b217b6033ffde49f3ed195b3d0f98bb042969"},
 ]
 
 [package.dependencies]
