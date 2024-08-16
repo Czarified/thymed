@@ -204,9 +204,12 @@ class Statblock(Container):
     delta: reactive[timedelta | None] = reactive(timedelta(days=7), recompose=True)
 
     def compose(self) -> ComposeResult:
-        # end = datetime.today()
-        # start = end - self.period
-        # self.data = self.timecard.general_report(start, end)
+        end = datetime.today()
+        start = end - self.delta
+        try:
+            self.data = self.timecard.general_report(start, end)
+        except AttributeError:
+            self.data = "Data and Statistics"
         yield Static(f"Period = {self.period}")
         yield Static(f"Days = {self.delta.days}")
 
@@ -325,7 +328,7 @@ class Reporting(Container):
             PlotextPlot(),
             self.codes,
             # Placeholder(self.name),
-            Statblock(TimeCard(self.code)),
+            Statblock(),
             Container(
                 # Title("Period"), Rule(),
                 Button("Period", id="period"),
