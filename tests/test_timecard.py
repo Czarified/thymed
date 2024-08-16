@@ -1,68 +1,18 @@
 """Test Cases for the ChargeCode class."""
 
 import datetime as dt
-import json
 import random
 
 import pandas as pd
 import pytest
 from rich.console import Console
 
-from thymed import _CHARGES
-from thymed import _DATA
 from thymed import ChargeCode
 from thymed import TimeCard
-from thymed import object_decoder
+from thymed import delete_charge
 
 
 # CLEANUP UTILITIES
-
-
-def remove_test_charge(id: str = "99999999") -> None:
-    """Cleanup the test ChargeCode.
-
-    Testing creates a ChargeCode. This function
-    manually removes the data, since deleting/removing
-    ChargeCode objects is not currently supported.
-    """
-    with open(_CHARGES) as f:
-        # We know it won't be blank, since we only call
-        # this function after we tested it already. So
-        # no try:except like the rest of the codebase.
-        codes = json.load(f, object_hook=object_decoder)
-
-    with open(_CHARGES, "w") as f:
-        # Remove the testing code with a pop method.
-        _ = codes.pop(id)
-        # Convert the dict of ChargeCodes into a plain dict
-        out = {}
-        for k, v in codes.items():
-            dict_val = v.__dict__
-            dict_val["__type__"] = "ChargeCode"
-            del dict_val["times"]
-            out[k] = dict_val
-        # Write the new set of codes back to the file.
-        _ = f.write(json.dumps(out, indent=2))
-
-
-def remove_test_data(id: str = "99999999") -> None:
-    """Cleanup the test ChargeCode punch data.
-
-    Testing creates a ChargeCode. This function
-    manually removes the data, since deleting/removing
-    ChargeCode objects is not currently supported.
-    """
-    with open(_DATA) as f:
-        # We know it won't be blank, since we only call
-        # this function after we tested it already. So
-        # no try:except like the rest of the codebase.
-        times = json.load(f)
-
-    with open(_DATA, "w") as f:
-        # Remove the testing code with a pop method.
-        _ = times.pop(id)
-        # Write the rest of times back to the file.
-        _ = f.write(json.dumps(times, indent=2))
 
 
 # FIXTURES
@@ -139,8 +89,7 @@ def test_weekly(fake_times):
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-    remove_test_charge()
-    remove_test_data()
+    delete_charge("99999999")
 
 
 def test_period(fake_times):
@@ -151,8 +100,7 @@ def test_period(fake_times):
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-    remove_test_charge()
-    remove_test_data()
+    delete_charge("99999999")
 
 
 def test_monthly(fake_times):
@@ -163,8 +111,7 @@ def test_monthly(fake_times):
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-    remove_test_charge()
-    remove_test_data()
+    delete_charge("99999999")
 
 
 if __name__ == "__main__":  # pragma: no cover

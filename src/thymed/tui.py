@@ -37,11 +37,13 @@ from textual.widgets import Footer
 from textual.widgets import Header
 from textual.widgets import Input
 from textual.widgets import Placeholder
+from textual.widgets import Select
 from textual.widgets import Static
 from textual.widgets import Switch
 from textual_plotext import PlotextPlot
 
 import thymed
+from thymed import ThymedError
 from thymed import TimeCard
 
 
@@ -200,7 +202,7 @@ class Statblock(Container):
     """A Block of statistics."""
 
     timecard: reactive[TimeCard | None] = reactive(None, recompose=True)
-    period: reactive[str | None] = reactive("Period", recompose=True)
+    period: reactive[str | None] = reactive("Week", recompose=True)
     delta: reactive[timedelta | None] = reactive(timedelta(days=7), recompose=True)
 
     def compose(self) -> ComposeResult:
@@ -283,22 +285,24 @@ class Reporting(Container):
         card = TimeCard(self.code)
         end = datetime.today()
         start = end - self.delta
-        df = card.general_report(start, end)
-        df["clock_in_day"] = df.clock_in.dt.strftime("%d/%m/%Y")
-        # TODO: Make the plot show an exact range, whether or not work entries are present. (Create a PR later.)
-        # Create a new date range with daily increments over the full range.
-        # The punches increments are variable (eg you may not work every day)
-        # new_clock_in_day = pd.date_range(start, end)
-        # Reindex the dataframe on the new range, filling blanks with an int of zero.
-        # df = df.set_index("clock_in_day").reindex(new_clock_in_day, fill_value=0).reset_index()
-        # Need to convert the clock_in to string for plotext
-        dates = df.clock_in_day
-        plt.clear_data()
-        plt.bar(dates, df.hours)
-        plt.title(self.name)
-        plt.xlabel("Date")
-        plt.ylabel("Hours")
-        self.plot.refresh()
+        try:
+            df = card.general_report(start, end)
+            df["clock_in_day"] = df.clock_in.dt.strftime("%d/%m/%Y")
+            dates = df.clock_in_day
+            # TODO: Make the plot show an exact range, whether or not work entries are present. (Create a PR later.)
+            plt.clear_data()
+            plt.bar(dates, df.hours)
+            plt.title(self.name)
+            plt.xlabel("Date")
+            plt.ylabel("Hours")
+
+            plt.xlim(left=datetime.strftime(start, "%d/%m/%Y"))
+
+            self.plot.refresh()
+        except ThymedError:
+            self.notify(
+                "Problem with that ChargeCode...", severity="error", title="Error"
+            )
 
     @textual.on(Button.Pressed, "#period")
     def cycle_period(self) -> None:
@@ -415,6 +419,52 @@ class AddScreen(ModalScreen):
         charge_name = self.query_one("#charge_name").value
         charge_description = self.query_one("#charge_description").value
         data = [charge_id, charge_name, charge_description]
+        if event.button.id == "submit":
+            self.dismiss(data)
+        else:
+            self.app.pop_screen()
+
+
+class RemoveScreen(ModalScreen):
+    """Screen with a dialog to remove a ChargeCode."""
+
+    def get_data(self) -> list:
+        """Function to retrieve Thymed data."""
+        with open(thymed._CHARGES) as f:
+            try:
+                codes = json.load(f, object_hook=thymed.object_decoder)
+
+                # Sort the codes dictionary by key (code id)
+                sorted_codes = sorted(codes.items(), key=lambda kv: int(kv[0]))
+                codes = [x[1] for x in sorted_codes]
+            except json.JSONDecodeError:  # pragma: no cover
+                self.notify("Got JSON Error", severity="error")
+                # If the file is completely blank, we will get an error
+                codes = [("No Codes Found", 0)]
+
+        out = []
+        for code in codes:
+            out.append((code.name, str(code.id)))
+
+        return out
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Title("Remove ChargeCode information", id="question"),
+            Static("ID Number: ", classes="right"),
+            Select(options=self.get_data(), id="charge_id"),
+            Static(
+                "THIS WILL IMMEDIATELY DELETE THE CODE AND ALL PUNCH DATA! IT CANNOT BE UNDONE!",
+                id="warning",
+            ),
+            Button("DELETE IT", variant="error", id="submit"),
+            Button("Cancel", variant="primary", id="cancel"),
+            id="dialog",
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        charge_id = self.query_one("#charge_id").value
+        data = [charge_id]
         if event.button.id == "submit":
             self.dismiss(data)
         else:
@@ -564,7 +614,7 @@ class ThymedApp(App[None]):
             self.action_launch_settings()
 
     @textual.on(Button.Pressed, "#add")
-    def code_screen(self, event: Button.Pressed):
+    def code_screen(self, event: Button.Pressed) -> None:
         """When we want to add a chargecode.
 
         When the AddScreen is dismissed, it will call the
@@ -589,6 +639,32 @@ class ThymedApp(App[None]):
             applet.data = applet.get_data()
 
         self.push_screen(AddScreen(), add_code)
+
+    @textual.on(Button.Pressed, "#remove")
+    def remove_screen(self, event: Button.Pressed) -> None:
+        """When we want to remove a chargecode.
+
+        When the RemoveScreen is dismissed, it will call the
+        callback function below.
+        """
+
+        def remove_code(data: list):
+            """Method to actually remove the ChargeCode and data.
+
+            This method gets called after the RemoveScreen is dismissed.
+            It takes data and calls the base Thymed methods to remove
+            a ChargeCode object and it's corresponding punch data.
+
+            After we finish removing the code, we call get_data on
+            the ChargeManager screen to refresh the table.
+            """
+            id = data[0]
+            thymed.delete_charge(id)
+
+            applet = self.query_one("#applet")
+            applet.data = applet.get_data()
+
+        self.push_screen(RemoveScreen(), remove_code)
 
     def action_open_link(self, link: str) -> None:
         self.app.bell()

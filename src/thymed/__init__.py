@@ -67,6 +67,13 @@ if not _CHARGES.exists():
     _CHARGES.touch()
 
 
+# Exceptions
+
+
+class ThymedError(Exception):
+    """A custome Exception for Thymed."""
+
+
 # Classes
 
 
@@ -237,7 +244,14 @@ class TimeCard:
 
         Start and End can theoretically be any datetime object.
         """
-        df = pd.DataFrame(self.code.times, columns=["clock_in", "clock_out"])
+        try:
+            df = pd.DataFrame(self.code.times, columns=["clock_in", "clock_out"])
+        except ValueError as exc:
+            # This happens when only a clock_in time is provided.
+            # AKA the code was created, and initialized, but not punched out.
+            raise ThymedError(
+                "Looks like this code doesn't have clock_in and clock_out times!"
+            ) from exc
         df["duration"] = df.clock_out - df.clock_in
         df["hours"] = df.duration.apply(
             lambda x: x.components.hours + round(x.components.minutes / 60, 1)
@@ -341,6 +355,44 @@ def get_code(id: int) -> Any:
         code = None
 
     return code
+
+
+def delete_charge(id: str = "99999999") -> None:
+    """Cleanup the test ChargeCode and punch data.
+
+    This function manually removes the data. There
+    may be a better way to do this in the future...
+    """
+    with open(_CHARGES) as f:
+        # We know it won't be blank, since we only call
+        # this function after we tested it already. So
+        # no try:except like the rest of the codebase.
+        codes = json.load(f, object_hook=object_decoder)
+
+    with open(_CHARGES, "w") as f:
+        # Remove the testing code with a pop method.
+        _ = codes.pop(id)
+        # Convert the dict of ChargeCodes into a plain dict
+        out = {}
+        for k, v in codes.items():
+            dict_val = v.__dict__
+            dict_val["__type__"] = "ChargeCode"
+            del dict_val["times"]
+            out[k] = dict_val
+        # Write the new set of codes back to the file.
+        _ = f.write(json.dumps(out, indent=2))
+
+    with open(_DATA) as f:
+        # We know it won't be blank, since we only call
+        # this function after we tested it already. So
+        # no try:except like the rest of the codebase.
+        times = json.load(f)
+
+    with open(_DATA, "w") as f:
+        # Remove the testing code with a pop method.
+        _ = times.pop(id)
+        # Write the rest of times back to the file.
+        _ = f.write(json.dumps(times, indent=2))
 
 
 # TODO: Function to update _DATA global variable.
