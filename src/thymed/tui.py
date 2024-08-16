@@ -287,16 +287,15 @@ class Reporting(Container):
         start = end - self.delta
         try:
             df = card.general_report(start, end)
-            df["clock_in_day"] = df.clock_in.dt.strftime("%d/%m/%Y")
-            dates = df.clock_in_day
+            plot_data = df["hours"].groupby(df["date"]).sum()
             # TODO: Make the plot show an exact range, whether or not work entries are present. (Create a PR later.)
             plt.clear_data()
-            plt.bar(dates, df.hours)
+            plt.bar(plot_data.index, plot_data)
             plt.title(self.name)
             plt.xlabel("Date")
             plt.ylabel("Hours")
 
-            plt.xlim(left=datetime.strftime(start, "%d/%m/%Y"))
+            plt.set_time0(datetime.strftime(start, "%d/%m/%Y"))
 
             self.plot.refresh()
         except ThymedError:

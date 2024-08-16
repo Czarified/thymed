@@ -252,6 +252,7 @@ class TimeCard:
             raise ThymedError(
                 "Looks like this code doesn't have clock_in and clock_out times!"
             ) from exc
+        df["date"] = df.clock_in.dt.strftime("%d/%m/%Y")
         df["duration"] = df.clock_out - df.clock_in
         df["hours"] = df.duration.apply(
             lambda x: x.components.hours + round(x.components.minutes / 60, 1)
