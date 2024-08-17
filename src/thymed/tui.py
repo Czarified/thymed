@@ -8,6 +8,7 @@ the dynamic sidebar of functions.
 
 import json
 from datetime import datetime
+from datetime import time
 from datetime import timedelta
 from importlib.metadata import version
 from itertools import cycle
@@ -29,6 +30,7 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
 
+# from textual.widgets import Placeholder
 # from textual.widgets import Rule
 from textual.widgets import Button
 from textual.widgets import DataTable
@@ -36,10 +38,11 @@ from textual.widgets import Digits
 from textual.widgets import Footer
 from textual.widgets import Header
 from textual.widgets import Input
-from textual.widgets import Placeholder
 from textual.widgets import Select
 from textual.widgets import Static
 from textual.widgets import Switch
+
+# from textual_datepicker import DateSelect
 from textual_plotext import PlotextPlot
 
 import thymed
@@ -105,7 +108,7 @@ class Sidebar(Container):
             Button("Punch Screen", classes="option punch", variant="success"),
             Button("ChargeCode Manager", classes="option charge", variant="success"),
             Button("Reporting", classes="option report", variant="success"),
-            Button("Admin Tools", classes="option admin", variant="success"),
+            Button("Entry From", classes="option entry", variant="success"),
             Button("Settings", classes="option settings", variant="success"),
         )
         yield Static(LINKS)
@@ -334,7 +337,7 @@ class Reporting(Container):
             Statblock(),
             Container(
                 # Title("Period"), Rule(),
-                Button("Period", id="period"),
+                Button("Period", id="period", variant="warning"),
                 Static(),
                 Button("Export", variant="success", id="export"),
             ),
@@ -374,6 +377,82 @@ class UnderConstruction(Container):
         yield Title(":hammer_and_wrench: WIP :hammer_and_wrench:")
 
 
+class EntryForm(Container):
+    """Timesheet Entry form.
+
+    The Entry Form offers another option for chargecode
+    data entry. Instead of punching in and out of a code,
+    sometimes it may be necessary or convenient to enter
+    information directly. With this form, you can define
+    in- and out- dates and times for a specific ChargeCode.
+    """
+
+    # Info is just a formatted version of the docstring.
+    info = (
+        __doc__.split("\n")[0]
+        + "\n"
+        + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
+    )
+
+    def get_data(self) -> list:
+        """Function to retrieve Thymed data."""
+        with open(thymed._CHARGES) as f:
+            try:
+                codes = json.load(f, object_hook=thymed.object_decoder)
+
+                # Sort the codes dictionary by key (code id)
+                sorted_codes = sorted(codes.items(), key=lambda kv: int(kv[0]))
+                codes = [x[1] for x in sorted_codes]
+            except json.JSONDecodeError:  # pragma: no cover
+                self.notify("Got JSON Error", severity="error")
+                # If the file is completely blank, we will get an error
+                codes = [("No Codes Found", 0)]
+
+        out = []
+        for code in codes:
+            out.append((code.name, str(code.id)))
+
+        return out
+
+    def compose(self) -> ComposeResult:
+        yield Grid(
+            Title("Time Entry Form", id="question"),
+            Static("ChargeCode: ", classes="right"),
+            Select(options=self.get_data(), id="entry_id"),
+            Static("Date: ", classes="right"),
+            Input(placeholder="YYYYMMDD ex. 17760704", id="entry_date"),
+            Static("Time In: ", classes="right"),
+            Input(placeholder="HHMM ex. 0815", id="entry_in"),
+            Static("Time Out: ", classes="right"),
+            Input(placeholder="HHMM ex. 1730", id="entry_out"),
+            Button("Submit", variant="success", id="submit"),
+            id="form",
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        entry_id = self.query_one("#entry_id").value
+
+        entry_date = str(self.query_one("#entry_date").value)
+        entry_date = datetime(
+            year=int(entry_date[:4]),
+            month=int(entry_date[4:6]),
+            day=int(entry_date[6:]),
+        )
+
+        entry_in = str(self.query_one("#entry_in").value)
+        entry_in = time(hour=int(entry_in[:2]), minute=int(entry_in[2:4]))
+
+        entry_out = str(self.query_one("#entry_out").value)
+        entry_out = time(hour=int(entry_out[:2]), minute=int(entry_out[2:4]))
+
+        self.notify(
+            f"Entering information for chargecode {entry_id}:\n"
+            f"Date={entry_date}\nTime_In={entry_in}\nTime_Out={entry_out}",
+            title="Time Entry",
+            severity="information",
+        )
+
+
 class Body(Container):
     """The Body is a container in the app that has dynamic widgets inside.
 
@@ -385,7 +464,7 @@ class Body(Container):
     the sidebar menu or keybindings.
     """
 
-    applet = reactive(Placeholder(id="applet"))
+    applet = reactive(PunchForm(id="applet"))
 
     def compose(self) -> ComposeResult:
         yield InfoPane(id="info")
@@ -477,8 +556,8 @@ class ThymedApp(App[None]):
         ("m", "toggle_sidebar", "Menu"),
         ("f1", "launch_punch", "Punch Screen"),
         ("f2", "launch_chargecode", "ChargeCode Manager"),
-        ("f3", "launch_report", "Reporting"),
-        ("f4", "launch_admin", "Admin Tools"),
+        ("f3", "launch_entry", "Entry Form"),
+        ("f4", "launch_report", "Reporting"),
         ("f12", "launch_settings", "Settings"),
         Binding("escape", "app.quit", "Quit", show=True),
     ]
@@ -524,10 +603,10 @@ class ThymedApp(App[None]):
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
-    def action_launch_admin(self) -> None:
-        """This method 'launches' the admin applet."""
+    def action_launch_entry(self) -> None:
+        """This method 'launches' the entry applet."""
         self.query_one("#applet").remove()
-        new = UnderConstruction(id="applet")
+        new = EntryForm(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
@@ -605,9 +684,9 @@ class ThymedApp(App[None]):
         elif "report" in classes:
             self.action_toggle_sidebar()
             self.action_launch_report()
-        elif "admin" in classes:
+        elif "entry" in classes:
             self.action_toggle_sidebar()
-            self.action_launch_admin()
+            self.action_launch_entry()
         elif "settings" in classes:
             self.action_toggle_sidebar()
             self.action_launch_settings()

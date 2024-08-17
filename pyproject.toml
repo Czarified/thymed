@@ -24,6 +24,7 @@ pandas = ">2.2.0"
 openpyxl = "^3.0.10"
 textual = ">0.38.1"
 textual-plotext = "^0.2.1"
+textual-datepicker = "^0.2.4"
 
 [tool.poetry.dev-dependencies]
 Pygments = ">=2.10.0"
