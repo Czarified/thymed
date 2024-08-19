@@ -384,7 +384,7 @@ class EntryForm(Container):
     data entry. Instead of punching in and out of a code,
     sometimes it may be necessary or convenient to enter
     information directly. With this form, you can define
-    in- and out- dates and times for a specific ChargeCode.
+    in- and out- date and times for a specific ChargeCode.
     """
 
     # Info is just a formatted version of the docstring.
