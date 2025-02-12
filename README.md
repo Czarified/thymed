@@ -28,7 +28,7 @@
 
 ## Requirements
 
-- No major requirements. If you have a Python version >= 3.8, you're good to go! Check out the installation section below.
+- No major requirements. If you have a modern Python version, you're good to go! Check out the installation section below.
 - Being familiar with the command-line is a plus. If the terminal scares you, this might not be the right tool for you.
 - Thymed uses [Rich](https://github.com/Textualize/rich) for console markup. A modern terminal will make output much prettier! :wink:
 
