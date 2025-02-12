@@ -1,31 +1,29 @@
-[project]
+[tool.poetry]
 name = "thymed"
-version = "0.6.1"
+version = "0.7.0"
 description = "Thymed"
-authors = [
-    { name = "Benjamin Crews", email = "aceF22@gmail.com" },
-]
+authors = ["Benjamin Crews <aceF22@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
-]
-requires-python = ">=3.10,<4.0"
-dependencies = [
-    "click>=8.0.1",
-    "toml>=0.10.2",
-    "rich>12.5.1",
-    "pandas>2.2.0",
-    "openpyxl>=3.0.10",
-    "textual>0.38.1",
-    "textual-plotext>0.2.1",
-    "textual-datepicker>=0.2.4"
-]
-
-[project.urls]
 homepage = "https://github.com/czarified/thymed"
 repository = "https://github.com/czarified/thymed"
 documentation = "https://thymed.readthedocs.io"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+click = ">=8.0.1"
+toml = ">=0.10.2"
+rich = ">12.5.1"
+pandas = ">2.2.0"
+openpyxl = ">=3.0.10"
+textual = ">0.38.1"
+textual-plotext = ">0.2.1"
+textual-datepicker = ">=0.2.4"
+
+[tool.poetry.urls]
 Changelog = "https://github.com/czarified/thymed/releases"
 
 [tool.poetry.requires-plugins]
@@ -55,9 +53,9 @@ sphinx-click = ">=3.0.2"
 typeguard = ">=2.13.3"
 xdoctest = {extras = ["colors"], version = ">=0.15.10"}
 myst-parser = {version = ">=0.16.1"}
-textual-dev = "^1.2.1"
+textual-dev = ">=1.2.1"
 
-[project.scripts]
+[tool.poetry.scripts]
 thymed = "thymed.__main__:main"
 punch = "thymed.__main__:punch_default"
 
@@ -87,5 +85,5 @@ show_error_codes = true
 show_error_context = true
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
