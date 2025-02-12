@@ -582,37 +582,37 @@ class ThymedApp(App[None]):
             # A lot of the time it just doesn't exist, so ignore this.
             pass
 
-    def action_launch_punch(self) -> None:
+    async def action_launch_punch(self) -> None:
         """This method 'launches' the punch form applet."""
-        self.query_one("#applet").remove()
+        await self.query_one("#applet").remove()
         new = PunchForm(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
-    def action_launch_chargecode(self) -> None:
+    async def action_launch_chargecode(self) -> None:
         """This method 'launches' the chargecode manager applet."""
-        self.query_one("#applet").remove()
+        await self.query_one("#applet").remove()
         new = ChargeManager(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
-    def action_launch_report(self) -> None:
+    async def action_launch_report(self) -> None:
         """This method 'launches' the reporting applet."""
-        self.query_one("#applet").remove()
+        await self.query_one("#applet").remove()
         new = Reporting(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
-    def action_launch_entry(self) -> None:
+    async def action_launch_entry(self) -> None:
         """This method 'launches' the entry applet."""
-        self.query_one("#applet").remove()
+        await self.query_one("#applet").remove()
         new = EntryForm(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
 
-    def action_launch_settings(self) -> None:
+    async def action_launch_settings(self) -> None:
         """This method 'launches' the settings applet."""
-        self.query_one("#applet").remove()
+        await self.query_one("#applet").remove()
         new = Settings(id="applet")
         self.query_one(InfoPane).info = new.info
         self.query_one(Body).mount(new)
@@ -671,25 +671,25 @@ class ThymedApp(App[None]):
             self.punch(id)
 
     @textual.on(Button.Pressed, ".option")
-    def option_buttons(self, event: Button.Pressed) -> None:
+    async def option_buttons(self, event: Button.Pressed) -> None:
         """What to do when the option buttons are pressed."""
         classes = event.button.classes
 
         if "punch" in classes:
             self.action_toggle_sidebar()
-            self.action_launch_punch()
+            await self.action_launch_punch()
         elif "charge" in classes:
             self.action_toggle_sidebar()
-            self.action_launch_chargecode()
+            await self.action_launch_chargecode()
         elif "report" in classes:
             self.action_toggle_sidebar()
-            self.action_launch_report()
+            await self.action_launch_report()
         elif "entry" in classes:
             self.action_toggle_sidebar()
-            self.action_launch_entry()
+            await self.action_launch_entry()
         elif "settings" in classes:
             self.action_toggle_sidebar()
-            self.action_launch_settings()
+            await self.action_launch_settings()
 
     @textual.on(Button.Pressed, "#add")
     def code_screen(self, event: Button.Pressed) -> None:

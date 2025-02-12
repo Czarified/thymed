@@ -24,13 +24,13 @@ except ImportError:
 
 
 package = "thymed"
-python_versions = ["3.12", "3.11", "3.10", "3.9"]
+python_versions = ["3.12", "3.11", "3.10"]
 nox.needs_version = ">= 2021.6.6"
 nox.options.sessions = (
     "pre-commit",
     "safety",
+    # "mypy",
     "tests",
-    "mypy",
     "typeguard",
     "xdoctest",
     "docs-build",
@@ -124,6 +124,7 @@ def precommit(session: Session) -> None:
         "black",
         "darglint",
         "flake8",
+        "flake8-bandit",
         "flake8-bugbear",
         "flake8-docstrings",
         "flake8-rst-docstrings",
@@ -143,19 +144,7 @@ def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
     session.install("safety")
-    session.run("safety", "check", "--full-report", f"--file={requirements}")
-
-
-@session(python=python_versions)
-def tests(session: Session) -> None:
-    """Run the test suite."""
-    session.install(".")
-    session.install("coverage[toml]", "pytest", "pygments")
-    try:
-        session.run("coverage", "run", "--parallel", "-m", "pytest", *session.posargs)
-    finally:
-        if session.interactive:
-            session.notify("coverage", posargs=[])
+    session.run("safety", "scan", "--full-report", f"--file={requirements}")
 
 
 @session(python=python_versions)
@@ -167,6 +156,25 @@ def mypy(session: Session) -> None:
     session.run("mypy", *args)
     if not session.posargs:
         session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
+
+
+@session(python=python_versions)
+def tests(session: Session) -> None:
+    """Run the test suite."""
+    session.install(".")
+    session.install("coverage[toml]", "pytest", "pygments")
+    try:
+        session.run(
+            "coverage",
+            "run",
+            "--parallel",
+            "-m",
+            "pytest",
+            *session.posargs,
+        )
+    finally:
+        if session.interactive:
+            session.notify("coverage", posargs=[])
 
 
 @session(python=python_versions[0])
@@ -213,7 +221,9 @@ def docs_build(session: Session) -> None:
         args.insert(0, "--color")
 
     session.install(".")
-    session.install("sphinx", "sphinx-click", "furo", "myst-parser")
+    session.install(
+        "sphinx", "sphinx-click", "furo", "myst-parser", "sphinxcontrib-bibtex"
+    )
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():

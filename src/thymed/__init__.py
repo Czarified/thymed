@@ -90,7 +90,7 @@ class ChargeCode:
                     it contains all the time code data in
                     a list of tuples. For example:
                     ::python
-                        [(Datetime, Datetime), ... (Datetime, Datetime)]
+                    [(Datetime, Datetime), ... (Datetime, Datetime)]
     """
 
     name: str
