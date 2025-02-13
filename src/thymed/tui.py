@@ -242,7 +242,8 @@ class Reporting(Container):
     name: reactive[str | None] = reactive(None)
     delta: reactive[timedelta] = reactive(timedelta(days=35))
     codes = reactive(DataTable(name="ChargeCodes"))
-    plot = reactive(None, recompose=True)
+    # plot = reactive(None, recompose=True)
+    plot = PlotextPlot()
 
     def get_codes(self) -> Table:
         """Function to retrieve Thymed data."""
@@ -298,7 +299,7 @@ class Reporting(Container):
             plt.xlabel("Date")
             plt.ylabel("Hours")
 
-            plt.set_time0(datetime.strftime(start, "%d/%m/%Y"))
+            # plt.set_time0(datetime.strftime(start, "%d/%m/%Y"), "d/m/Y")
 
             self.plot.refresh()
         except ThymedError:
@@ -331,7 +332,7 @@ class Reporting(Container):
         self.get_codes()
         self.codes.cursor_type = "row"
         yield Grid(
-            PlotextPlot(),
+            self.plot,
             self.codes,
             # Placeholder(self.name),
             Statblock(),
