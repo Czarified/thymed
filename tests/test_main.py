@@ -5,9 +5,7 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from thymed import _CHARGES
-from thymed import __main__
-from thymed import object_decoder
+from thymed import _CHARGES, __main__, object_decoder
 
 
 # CLEANUP UTILITIES
@@ -49,7 +47,7 @@ def runner() -> CliRunner:
 
 def test_main_succeeds(runner: CliRunner) -> None:
     """It exits with a status code of zero."""
-    result = runner.invoke(__main__.main)
+    result = runner.invoke(__main__.main, ["--help"])
     assert result.exit_code == 0
 
 

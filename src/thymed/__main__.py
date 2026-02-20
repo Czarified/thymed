@@ -7,9 +7,7 @@ from typing import Any
 import click
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Confirm
-from rich.prompt import IntPrompt
-from rich.prompt import Prompt
+from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.table import Table
 from rich.traceback import install
 

@@ -11,8 +11,7 @@ import nox
 
 
 try:
-    from nox_poetry import Session
-    from nox_poetry import session
+    from nox_poetry import Session, session
 except ImportError:
     message = f"""\
     Nox failed to import the 'nox-poetry' package.
@@ -24,7 +23,7 @@ except ImportError:
 
 
 package = "thymed"
-python_versions = ["3.12", "3.11", "3.10"]
+python_versions = ["3.12", "3.13", "3.14"]
 nox.needs_version = ">= 2021.6.6"
 nox.options.sessions = (
     "pre-commit",
@@ -143,8 +142,9 @@ def precommit(session: Session) -> None:
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
-    session.install("safety")
-    session.run("safety", "scan", "--full-report", f"--file={requirements}")
+    session.install("safety", "filelock>=3.20.3")
+    session.run("python", "-m", "pip", "install", "-U", "pip", "setuptools")
+    session.run("safety", "scan", "--detailed-output", f"--file={requirements}")
 
 
 @session(python=python_versions)
