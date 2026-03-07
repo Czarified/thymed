@@ -7,9 +7,7 @@ import pandas as pd
 import pytest
 from rich.console import Console
 
-from thymed import ChargeCode
-from thymed import TimeCard
-from thymed import delete_charge
+from thymed import ChargeCode, TimeCard, delete_charge
 
 
 # CLEANUP UTILITIES

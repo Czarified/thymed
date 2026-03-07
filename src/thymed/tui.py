@@ -7,9 +7,7 @@ the dynamic sidebar of functions.
 """
 
 import json
-from datetime import datetime
-from datetime import time
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from importlib.metadata import version
 from itertools import cycle
 from pathlib import Path
@@ -18,13 +16,9 @@ from pathlib import Path
 import textual
 from rich.console import RenderableType
 from rich.table import Table
-from textual.app import App
-from textual.app import ComposeResult
+from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container
-from textual.containers import Grid
-from textual.containers import Horizontal
-from textual.containers import ScrollableContainer
+from textual.containers import Container, Grid, Horizontal, ScrollableContainer
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
@@ -32,22 +26,23 @@ from textual.widget import Widget
 
 # from textual.widgets import Placeholder
 # from textual.widgets import Rule
-from textual.widgets import Button
-from textual.widgets import DataTable
-from textual.widgets import Digits
-from textual.widgets import Footer
-from textual.widgets import Header
-from textual.widgets import Input
-from textual.widgets import Select
-from textual.widgets import Static
-from textual.widgets import Switch
+from textual.widgets import (
+    Button,
+    DataTable,
+    Digits,
+    Footer,
+    Header,
+    Input,
+    Select,
+    Static,
+    Switch,
+)
 
 # from textual_datepicker import DateSelect
 from textual_plotext import PlotextPlot
 
 import thymed
-from thymed import ThymedError
-from thymed import TimeCard
+from thymed import ThymedError, TimeCard
 
 
 # from pathlib import Path

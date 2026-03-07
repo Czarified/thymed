@@ -7,12 +7,9 @@ related to to time-keeping.
 import datetime as dt
 import json
 from copy import copy
-from dataclasses import dataclass
-from dataclasses import field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from typing import List
-from typing import Tuple
 
 import pandas as pd
 import toml
@@ -97,7 +94,7 @@ class ChargeCode:
     description: str
     id: int
 
-    times: List[Tuple[dt.datetime, dt.datetime]] = field(default_factory=list)
+    times: list[tuple[dt.datetime, dt.datetime]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Stuff to do right after instantiation.

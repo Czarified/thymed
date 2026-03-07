@@ -11,8 +11,7 @@ import nox
 
 
 try:
-    from nox_poetry import Session
-    from nox_poetry import session
+    from nox_poetry import Session, session
 except ImportError:
     message = f"""\
     Nox failed to import the 'nox-poetry' package.
@@ -24,8 +23,8 @@ except ImportError:
 
 
 package = "thymed"
-python_versions = ["3.12", "3.11", "3.10"]
-nox.needs_version = ">= 2021.6.6"
+python_versions = ["3.12", "3.13", "3.14"]
+nox.needs_version = ">= 2025"
 nox.options.sessions = (
     "pre-commit",
     "safety",
@@ -111,7 +110,7 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
                 break
 
 
-@session(name="pre-commit", python=python_versions[0])
+@session(name="pre-commit", python=python_versions[-1])
 def precommit(session: Session) -> None:
     """Lint using pre-commit."""
     args = session.posargs or [
@@ -139,12 +138,13 @@ def precommit(session: Session) -> None:
         activate_virtualenv_in_precommit_hooks(session)
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[-1])
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
-    session.install("safety")
-    session.run("safety", "scan", "--full-report", f"--file={requirements}")
+    session.install("safety", "filelock>=3.20.3")
+    session.run("python", "-m", "pip", "install", "-U", "pip", "setuptools")
+    session.run("safety", "scan", "--detailed-output", f"--file={requirements}")
 
 
 @session(python=python_versions)
@@ -177,7 +177,7 @@ def tests(session: Session) -> None:
             session.notify("coverage", posargs=[])
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[-1])
 def coverage(session: Session) -> None:
     """Produce the coverage report."""
     args = session.posargs or ["report"]
@@ -190,7 +190,7 @@ def coverage(session: Session) -> None:
     session.run("coverage", *args)
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[-1])
 def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
@@ -198,7 +198,7 @@ def typeguard(session: Session) -> None:
     session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
 
 
-@session(python=python_versions)
+@session(python=python_versions[-1])
 def xdoctest(session: Session) -> None:
     """Run examples with xdoctest."""
     if session.posargs:
@@ -213,7 +213,7 @@ def xdoctest(session: Session) -> None:
     session.run("python", "-m", "xdoctest", *args)
 
 
-@session(name="docs-build", python=python_versions[0])
+@session(name="docs-build", python=python_versions[-1])
 def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
@@ -232,7 +232,7 @@ def docs_build(session: Session) -> None:
     session.run("sphinx-build", *args)
 
 
-@session(python=python_versions[0])
+@session(python=python_versions[-1])
 def docs(session: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]

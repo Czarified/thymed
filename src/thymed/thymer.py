@@ -9,20 +9,13 @@ from time import monotonic
 
 # from rich.text import Text
 # from textual import events
-from textual.app import App
-from textual.app import ComposeResult
-from textual.containers import Container
-from textual.containers import ScrollableContainer
+from textual.app import App, ComposeResult
+from textual.containers import Container, ScrollableContainer
 from textual.reactive import reactive
 
 # from textual.reactive import var
 from textual.widget import Widget
-from textual.widgets import Button
-from textual.widgets import DataTable
-from textual.widgets import Footer
-from textual.widgets import Header
-from textual.widgets import Rule
-from textual.widgets import Static
+from textual.widgets import Button, DataTable, Footer, Header, Rule, Static
 
 import thymed
 

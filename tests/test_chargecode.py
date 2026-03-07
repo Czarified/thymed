@@ -9,10 +9,7 @@ import pandas as pd
 import pytest
 from rich.console import Console
 
-from thymed import _CHARGES
-from thymed import _DATA
-from thymed import ChargeCode
-from thymed import object_decoder
+from thymed import _CHARGES, _DATA, ChargeCode, object_decoder
 
 
 # CLEANUP UTILITIES
