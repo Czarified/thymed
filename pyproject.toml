@@ -1,6 +1,6 @@
 [project]
 name = "thymed"
-version = "0.7.1"
+version = "0.8.0"
 description = "Thymed"
 authors = [{ name = "Benjamin Crews", email = "aceF22@gmail.com" }]
 license = "MIT"
