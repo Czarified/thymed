@@ -246,6 +246,8 @@ class TimeCard:
         """
         try:
             df = pd.DataFrame(self.code.times, columns=["clock_in", "clock_out"])
+            df["clock_in"] = pd.to_datetime(df["clock_in"])
+            df["clock_out"] = pd.to_datetime(df["clock_out"])
         except ValueError as exc:
             # This happens when only a clock_in time is provided.
             # AKA the code was created, and initialized, but not punched out.
