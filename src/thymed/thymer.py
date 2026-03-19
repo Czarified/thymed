@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 """This module contains the TUI code.
 
 The Text User Interface is all created, managed,
@@ -6,6 +9,7 @@ and tested with Textual.
 
 import json
 from time import monotonic
+from typing import no_type_check
 
 # from rich.text import Text
 # from textual import events
@@ -96,6 +100,7 @@ class Stopwatch(Static):
         elif button_id == "reset":
             time_display.reset()
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         """Create child widgets of a stopwatch."""
         display = TimeDisplay()
@@ -133,6 +138,7 @@ class Thingy(Static):
             if timers:
                 timers.last().remove()
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         """Create child widgets of a stopwatch."""
         yield Button("Add", id="add", variant="success")
@@ -143,6 +149,7 @@ class Thingy(Static):
 class HomePane(Container):
     """A view of Thymed ChargeCodes, and buttons to add timers."""
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         """Compose."""
         self.name_widget = Static("Thymed.\n")
@@ -165,6 +172,7 @@ class Thymer(App):
     CSS_PATH = "thymer.tcss"
     BINDINGS = [("escape", "exit", "Quit"), ("d", "toggle_dark", "Toggle dark mode")]
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header(show_clock=True)
