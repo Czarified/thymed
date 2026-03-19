@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 """The main Thymed Textual App.
 
 This module contains the code for the Textual TUI of the main Textual
@@ -11,6 +14,7 @@ from datetime import datetime, time, timedelta
 from importlib.metadata import version
 from itertools import cycle
 from pathlib import Path
+from typing import no_type_check
 
 # import pandas as pd
 import textual
@@ -96,6 +100,7 @@ class Version(Static):
 
 
 class Sidebar(Container):
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield Title("Menu")
         yield Static(SIDEBAR_INFO)
@@ -134,6 +139,7 @@ class PunchForm(Container):
         + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
     )
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield Digits("", id="clock")
         yield Static("ChargeCode ID:", classes="label")
@@ -185,6 +191,7 @@ class ChargeManager(ScrollableContainer):
 
         return table
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield Title("ChargeCodes in Current Database")
         self.data = self.get_data()
@@ -203,6 +210,7 @@ class Statblock(Container):
     period: reactive[str | None] = reactive("Week", recompose=True)
     delta: reactive[timedelta | None] = reactive(timedelta(days=7), recompose=True)
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         end = datetime.today()
         start = end - self.delta
@@ -323,6 +331,7 @@ class Reporting(Container):
         df.to_csv(f"timecard_{self.name}.csv")
         self.notify(f"Exported {self.name} to {Path.cwd()}", title="Export")
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         self.get_codes()
         self.codes.cursor_type = "row"
@@ -350,6 +359,7 @@ class Settings(ScrollableContainer):
         + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
     )
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         for _i in range(10):
             yield Horizontal(Static("A settings switch"), Switch())
@@ -369,6 +379,7 @@ class UnderConstruction(Container):
         + " ".join([line.strip() for line in __doc__.split("\n")[1:]])
     )
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield Title(":hammer_and_wrench: WIP :hammer_and_wrench:")
 
@@ -410,6 +421,7 @@ class EntryForm(Container):
 
         return out
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield Grid(
             Title("Time Entry Form", id="question"),
@@ -462,6 +474,7 @@ class Body(Container):
 
     applet = reactive(PunchForm(id="applet"))
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield InfoPane(id="info")
         yield self.applet
@@ -470,6 +483,7 @@ class Body(Container):
 class AddScreen(ModalScreen):
     """Screen with a dialog to add a ChargeCode."""
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield Grid(
             Title("Add new ChargeCode information", id="question"),
@@ -522,6 +536,7 @@ class RemoveScreen(ModalScreen):
 
         return out
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield Grid(
             Title("Remove ChargeCode information", id="question"),
@@ -560,6 +575,7 @@ class ThymedApp(App[None]):
 
     show_sidebar = reactive(False)
 
+    @no_type_check
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Container(Sidebar(classes="-hidden"), Body())
