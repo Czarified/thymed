@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 """The main Thymed Textual App.
 
 This module contains the code for the Textual TUI of the main Textual
@@ -9,8 +6,10 @@ surrounded by a header and footer. Most of the functionality comes with
 the dynamic sidebar of functions.
 """
 
+from __future__ import annotations
+
 import json
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 from importlib.metadata import version
 from itertools import cycle
 from pathlib import Path
@@ -438,27 +437,69 @@ class EntryForm(Container):
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        entry_id = self.query_one("#entry_id").value
+        """Handle the submit button press."""
+        if event.button.id != "submit":
+            return
 
-        entry_date = str(self.query_one("#entry_date").value)
-        entry_date = datetime(
-            year=int(entry_date[:4]),
-            month=int(entry_date[4:6]),
-            day=int(entry_date[6:]),
-        )
+        try:
+            entry_id = self.query_one("#entry_id").value
+            if entry_id is None:
+                self.notify(
+                    "Please select a ChargeCode.", title="Error", severity="error"
+                )
+                return
 
-        entry_in = str(self.query_one("#entry_in").value)
-        entry_in = time(hour=int(entry_in[:2]), minute=int(entry_in[2:4]))
+            entry_date_str = str(self.query_one("#entry_date").value)
+            entry_date = datetime.strptime(entry_date_str, "%Y%m%d")
 
-        entry_out = str(self.query_one("#entry_out").value)
-        entry_out = time(hour=int(entry_out[:2]), minute=int(entry_out[2:4]))
+            entry_in_str = str(self.query_one("#entry_in").value)
+            entry_in_time = datetime.strptime(entry_in_str, "%H%M").time()
 
-        self.notify(
-            f"Entering information for chargecode {entry_id}:\n"
-            f"Date={entry_date}\nTime_In={entry_in}\nTime_Out={entry_out}",
-            title="Time Entry",
-            severity="information",
-        )
+            entry_out_str = str(self.query_one("#entry_out").value)
+            entry_out_time = datetime.strptime(entry_out_str, "%H%M").time()
+
+            start_dt = datetime.combine(entry_date.date(), entry_in_time)
+            end_dt = datetime.combine(entry_date.date(), entry_out_time)
+
+            if end_dt <= start_dt:
+                self.notify(
+                    "Out time must be after In time.", title="Error", severity="error"
+                )
+                return
+
+            code = thymed.get_code(int(entry_id))
+            if code:
+                code.times.append((start_dt, end_dt))
+                code.write_json()
+                self.notify(
+                    f"Entered information for {code.name}:\n"
+                    f"Date={entry_date.date()}\n"
+                    f"Time_In={entry_in_time}\n"
+                    f"Time_Out={entry_out_time}",
+                    title="Time Entry Success",
+                    severity="information",
+                )
+                # Clear inputs after success
+                self.query_one("#entry_date").value = ""
+                self.query_one("#entry_in").value = ""
+                self.query_one("#entry_out").value = ""
+            else:
+                self.notify(
+                    f"Cannot find the charge code with id: {entry_id}",
+                    title="Error",
+                    severity="error",
+                )
+
+        except ValueError:
+            self.notify(
+                "Invalid Date or Time format. Please use YYYYMMDD and HHMM.",
+                title="Input Error",
+                severity="error",
+            )
+        except Exception as e:
+            self.notify(
+                f"An unexpected error occurred: {e}", title="Error", severity="error"
+            )
 
 
 class Body(Container):
