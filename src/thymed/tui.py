@@ -15,7 +15,7 @@ from itertools import cycle
 from pathlib import Path
 from typing import no_type_check
 
-# import pandas as pd
+import pandas as pd
 import textual
 from rich.console import RenderableType
 from rich.table import Table
@@ -211,14 +211,22 @@ class Statblock(Container):
 
     @no_type_check
     def compose(self) -> ComposeResult:
-        end = datetime.today()
-        start = end - self.delta
-        try:
-            self.data = self.timecard.general_report(start, end)
-        except AttributeError:
-            self.data = "Data and Statistics"
         yield Static(f"Period = {self.period}")
         yield Static(f"Days = {self.delta.days}")
+
+        if self.timecard:
+            end = datetime.today()
+            start = end - self.delta
+            try:
+                df = self.timecard.general_report(start, end)
+                total_hours = df["hours"].sum()
+                avg_hours = total_hours / self.delta.days if self.delta.days > 0 else 0
+                yield Static(f"Total Hours: {total_hours:.2f}")
+                yield Static(f"Average/Day: {avg_hours:.2f}")
+            except (ThymedError, AttributeError, ValueError):
+                yield Static("No data for period")
+        else:
+            yield Static("Select a ChargeCode")
 
 
 class Reporting(Container):
@@ -240,14 +248,12 @@ class Reporting(Container):
     )
 
     # TODO: Initialize the code to be the Thymed default code option.
-    code: reactive[str | None] = reactive(0)
+    code: reactive[int | None] = reactive(0)
     name: reactive[str | None] = reactive(None)
     delta: reactive[timedelta] = reactive(timedelta(days=35))
     codes = reactive(DataTable(name="ChargeCodes"))
-    # plot = reactive(None, recompose=True)
-    plot = PlotextPlot()
 
-    def get_codes(self) -> Table:
+    def get_codes(self) -> None:
         """Function to retrieve Thymed data."""
         # WTF does clear even do??
         # I need to hard reset it to get the behavior I want.
@@ -270,13 +276,20 @@ class Reporting(Container):
         for code in codes:
             self.codes.add_row(str(code.id), code.name)
 
+    def watch_code(self, code: int) -> None:
+        """Watch for changes to the selected code."""
+        if code is not None:
+            try:
+                stats = self.query_one(Statblock)
+                stats.timecard = TimeCard(code)
+            except NoMatches:
+                pass
+
     def on_mount(self):
         """Initialize the plot."""
-        self.plot = self.query_one(PlotextPlot)
+        self.plot = self.query_one("#plot", PlotextPlot)
         plt = self.plot.plt
-        y = plt.sin()  # sinusoidal test signal
-        plt.scatter(y)
-        plt.title("Scatter Plot")
+        plt.title("Select a ChargeCode to view graph")
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected):
         """What to do when a new row is selected."""
@@ -293,18 +306,25 @@ class Reporting(Container):
         start = end - self.delta
         try:
             df = card.general_report(start, end)
-            plot_data = df["hours"].groupby(df["date"]).sum()
-            # TODO: Make the plot show an exact range, whether or not work entries are present. (Create a PR later.)
+
+            # Group by actual date to ensure correct sorting
+            df["actual_date"] = pd.to_datetime(df["clock_in"]).dt.date
+            plot_data = df["hours"].groupby(df["actual_date"]).sum()
+
+            # Reindex to include all dates in the range
+            all_dates = pd.date_range(start=start, end=end).date
+            plot_data = plot_data.reindex(all_dates, fill_value=0)
+
             plt.clear_data()
-            plt.bar(plot_data.index, plot_data)
+            # Use MM/DD for labels
+            x_labels = [d.strftime("%m/%d") for d in plot_data.index]
+            plt.bar(x_labels, plot_data.values.tolist())
             plt.title(self.name)
             plt.xlabel("Date")
             plt.ylabel("Hours")
 
-            # plt.set_time0(datetime.strftime(start, "%d/%m/%Y"), "d/m/Y")
-
             self.plot.refresh()
-        except ThymedError:
+        except (ThymedError, ValueError):
             self.notify(
                 "Problem with that ChargeCode...", severity="error", title="Error"
             )
@@ -335,7 +355,7 @@ class Reporting(Container):
         self.get_codes()
         self.codes.cursor_type = "row"
         yield Grid(
-            self.plot,
+            PlotextPlot(id="plot"),
             self.codes,
             # Placeholder(self.name),
             Statblock(),
