@@ -147,13 +147,45 @@ Message {
 
 }
 
-Settings > Horizontal {
-    border: wide black;
-    height: 5;
+Settings {
+    padding: 0 1;
 }
 
-Horizontal > Switch {
-    dock: right;
+Settings .setting-title {
+    background: $boost;
+    color: springgreen;
+    padding: 0 1;
+    margin-top: 1;
+    text-style: bold underline;
+}
+
+SettingRow {
+    height: auto;
+    margin: 1 0 0 0;
+}
+
+SettingRow .setting-label {
+    width: 24;
+    padding: 1 1;
+    text-align: right;
+    color: mediumspringgreen;
+}
+
+SettingRow Input {
+    width: 1fr;
+}
+
+SettingRow Select {
+    width: 1fr;
+}
+
+SettingRow Button {
+    margin-left: 1;
+}
+
+Settings .setting-note {
+    margin-top: 1;
+    color: $text-muted;
 }
 
 AddScreen {

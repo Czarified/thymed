@@ -51,6 +51,10 @@ if not __DIR.exists():
 with open(__CONFIG) as f:
     __OPTIONS = toml.load(f)
 
+# Public handle on the config file location, so it can be redirected
+# (e.g. in tests) and used by the settings helpers below.
+_CONFIG = __CONFIG
+
 # The data file to store information.
 # Controlled in the CONFIG file, and therefore customizable by user
 _DATA = Path(__OPTIONS["database"]["data"])
@@ -143,12 +147,20 @@ class ChargeCode:
             # Open the code.
             self.times.append((dt.datetime.now(),))
 
-    def write_json(self, data: Path = _DATA, log: bool = False) -> None:
+    def write_json(self, data: Path | None = None, log: bool = False) -> None:
         """Write the times data to a json file.
 
         Read the file first, then append the times to their
         appropriate charge code number.
+
+        Args:
+            data: The punch file to write to. Defaults to the
+                currently configured punch file (``thymed._DATA``),
+                resolved at call time so runtime changes are honored.
+            log: Print progress information to the console.
         """
+        if data is None:
+            data = _DATA
         console = Console()
         _times = []
         for entry in self.times:
@@ -393,7 +405,129 @@ def delete_charge(id: str = "99999999") -> None:
         _ = f.write(json.dumps(times, indent=2))
 
 
-# TODO: Function to update _DATA global variable.
-#       This function should be available in the CLI,
-#       prompt to make the new file if non-existent,
-#       and update the config.toml to use the new file.
+# Settings / configuration helpers
+
+
+def get_options() -> dict:
+    """Return the live configuration dictionary.
+
+    This is the same object as the module-level options, so mutating
+    it changes the running configuration. Call :func:`save_config`
+    to persist changes to disk.
+
+    Returns:
+        The parsed config.toml contents.
+    """
+    return __OPTIONS
+
+
+def get_setting(section: str, key: str, default: Any = None) -> Any:
+    """Read a single setting from the configuration.
+
+    Args:
+        section: The TOML table name, e.g. ``"database"``.
+        key: The key inside that table.
+        default: Value returned when the setting is missing.
+
+    Returns:
+        The stored value, or ``default``.
+    """
+    return __OPTIONS.get(section, {}).get(key, default)
+
+
+def save_config() -> None:
+    """Write the current configuration back to the config file."""
+    with open(_CONFIG, "w") as f:
+        _ = toml.dump(__OPTIONS, f)
+
+
+def set_setting(section: str, key: str, value: Any) -> None:
+    """Change a single setting and persist it.
+
+    Args:
+        section: The TOML table name, e.g. ``"tui"``.
+        key: The key inside that table.
+        value: The new value. Must be TOML serializable.
+    """
+    __OPTIONS.setdefault(section, {})[key] = value
+    save_config()
+
+
+def _prepare_json_file(path: str | Path) -> Path:
+    """Validate (or create) a JSON storage file for Thymed.
+
+    Existing files must be blank or contain a JSON object. Missing files
+    (and their parent folders) are created with an empty JSON object.
+
+    Args:
+        path: Location of the file. ``~`` is expanded.
+
+    Returns:
+        The resolved path to the file.
+
+    Raises:
+        ThymedError: If the path is a directory or holds invalid data.
+    """
+    new = Path(path).expanduser().resolve()
+    if new.is_dir():
+        raise ThymedError(f"{new} is a directory, not a file.")
+    if new.exists():
+        text = new.read_text().strip()
+        if text:
+            try:
+                content = json.loads(text)
+            except json.JSONDecodeError as exc:
+                raise ThymedError(f"{new} does not contain valid JSON.") from exc
+            if not isinstance(content, dict):
+                raise ThymedError(f"{new} is not a Thymed data file.")
+    else:
+        new.parent.mkdir(parents=True, exist_ok=True)
+        new.write_text("{}")
+    return new
+
+
+def set_data_file(path: str | Path) -> Path:
+    """Switch the punch data file Thymed uses.
+
+    The file is created if it does not exist. The running module and
+    the config file are both updated.
+
+    Args:
+        path: Location of the new punch data file.
+
+    Returns:
+        The resolved path now in use.
+    """
+    global _DATA
+    new = _prepare_json_file(path)
+    _DATA = new
+    set_setting("database", "data", new.as_posix())
+    return new
+
+
+def set_charges_file(path: str | Path) -> Path:
+    """Switch the ChargeCode file Thymed uses.
+
+    The file is created if it does not exist. The running module and
+    the config file are both updated.
+
+    Args:
+        path: Location of the new ChargeCode file.
+
+    Returns:
+        The resolved path now in use.
+    """
+    global _CHARGES
+    new = _prepare_json_file(path)
+    _CHARGES = new
+    set_setting("database", "charges", new.as_posix())
+    return new
+
+
+def set_default_code(id: int) -> None:
+    """Set the default ChargeCode used by ``thymed punch``.
+
+    Args:
+        id: The ChargeCode id.
+    """
+    set_setting("database", "default", int(id))
