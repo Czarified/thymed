@@ -50,23 +50,25 @@ from thymed import ThymedError, TimeCard
 # from pathlib import Path
 
 
+# Textual's content markup doesn't expand Rich ``:emoji:`` codes, so
+# use the literal emoji characters in widget text.
 SIDEBAR_INFO = """
-There are multiple tools available in Thymed. To use one, select it or hit the keybinding. The main area will be updated with the 'applet' along with some more information. :smiley:
+There are multiple tools available in Thymed. To use one, select it or hit the keybinding. The main area will be updated with the 'applet' along with some more information. 😃
 """  # noqa: B950
 
 LINKS = """
 Here are some links, you can click these!
 
 [@click="app.open_link('https://github.com/czarified/thymed')"]Thymed GitHub[/]
-[@click="app.open_link('https://thymed.readthedocs.io/en/latest/')"]:books:Thymed Docs[/]
-[@click="app.open_link('https://github.com/czarified/thymed/issues')"]:hammer_and_wrench: Contact the Dev[/]
-[@click="app.open_link('https://github.com/czarified/thymed/blob/master/CONTRIBUTING.md')"]:heart: Contribute![/]
+[@click="app.open_link('https://thymed.readthedocs.io/en/latest/')"]📚 Thymed Docs[/]
+[@click="app.open_link('https://github.com/czarified/thymed/issues')"]🛠 Contact the Dev[/]
+[@click="app.open_link('https://github.com/czarified/thymed/blob/master/CONTRIBUTING.md')"]❤ Contribute![/]
 """
 
 LOGO = """
 
-â–€â–ˆâ–€â€ƒâ–ˆâ–‘â–ˆâ€ƒâ–ˆâ–„â–ˆâ€ƒâ–ˆâ–€â–„â–€â–ˆâ€ƒâ–ˆâ–€â–€â€ƒâ–ˆâ–€â–„â€ƒâ–‘
-â–‘â–ˆâ–‘â€ƒâ–ˆâ–€â–ˆâ€ƒâ–‘â–ˆâ–‘â€ƒâ–ˆâ–‘â–€â–‘â–ˆâ€ƒâ–ˆâ–ˆâ–„â€ƒâ–ˆâ–„â–€â€ƒâ–„
+▀█▀ █░█ █▄█ █▀▄▀█ █▀▀ █▀▄ ░
+░█░ █▀█ ░█░ █░▀░█ ██▄ █▄▀ ▄
 """
 
 PERIODS = cycle(
@@ -538,7 +540,7 @@ class UnderConstruction(Container):
 
     @no_type_check
     def compose(self) -> ComposeResult:
-        yield Title(":hammer_and_wrench: WIP :hammer_and_wrench:")
+        yield Title("🛠 WIP 🛠")
 
 
 class EntryForm(Container):
