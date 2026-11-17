@@ -263,9 +263,10 @@ class TimeCard:
             ) from exc
         df["date"] = df.clock_in.dt.strftime("%d/%m/%Y")
         df["duration"] = df.clock_out - df.clock_in
-        df["hours"] = df.duration.apply(
-            lambda x: x.components.hours + round(x.components.minutes / 60, 1)
-        )
+        # Open punches (still clocked in) have no clock_out, so their
+        # duration is NaT and hours are NaN. Pandas sums skip NaN, so
+        # they simply don't count toward totals until punched out.
+        df["hours"] = (df.duration.dt.total_seconds() / 3600).round(1)
         df["week"] = df.clock_in.dt.isocalendar().week
         # Day 0 corresponds to Monday, Day 6 = Sunday
         df["day"] = df.clock_in.dt.day_of_week
