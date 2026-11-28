@@ -38,7 +38,6 @@ from textual.widgets import (
     Input,
     Select,
     Static,
-    Switch,
 )
 
 # from textual_datepicker import DateSelect
@@ -51,17 +50,19 @@ from thymed import ThymedError, TimeCard
 # from pathlib import Path
 
 
+# Textual's content markup doesn't expand Rich ``:emoji:`` codes, so
+# use the literal emoji characters in widget text.
 SIDEBAR_INFO = """
-There are multiple tools available in Thymed. To use one, select it or hit the keybinding. The main area will be updated with the 'applet' along with some more information. :smiley:
+There are multiple tools available in Thymed. To use one, select it or hit the keybinding. The main area will be updated with the 'applet' along with some more information. 😃
 """  # noqa: B950
 
 LINKS = """
 Here are some links, you can click these!
 
 [@click="app.open_link('https://github.com/czarified/thymed')"]Thymed GitHub[/]
-[@click="app.open_link('https://thymed.readthedocs.io/en/latest/')"]:books:Thymed Docs[/]
-[@click="app.open_link('https://github.com/czarified/thymed/issues')"]:hammer_and_wrench: Contact the Dev[/]
-[@click="app.open_link('https://github.com/czarified/thymed/blob/master/CONTRIBUTING.md')"]:heart: Contribute![/]
+[@click="app.open_link('https://thymed.readthedocs.io/en/latest/')"]📚 Thymed Docs[/]
+[@click="app.open_link('https://github.com/czarified/thymed/issues')"]🛠 Contact the Dev[/]
+[@click="app.open_link('https://github.com/czarified/thymed/blob/master/CONTRIBUTING.md')"]❤ Contribute![/]
 """
 
 LOGO = """
@@ -326,9 +327,10 @@ class Reporting(Container):
         end = datetime.today()
         start = end - self.delta
         df = card.general_report(start, end)
-        df.to_excel(f"timecard_{self.name}.xlsx")
-        df.to_csv(f"timecard_{self.name}.csv")
-        self.notify(f"Exported {self.name} to {Path.cwd()}", title="Export")
+        folder = Path(thymed.get_setting("reporting", "export_dir", Path.cwd()))
+        df.to_excel(folder / f"timecard_{self.name}.xlsx")
+        df.to_csv(folder / f"timecard_{self.name}.csv")
+        self.notify(f"Exported {self.name} to {folder}", title="Export")
 
     @no_type_check
     def compose(self) -> ComposeResult:
@@ -348,8 +350,32 @@ class Reporting(Container):
         )
 
 
+def code_options() -> list[tuple[str, str]]:
+    """Return ``(label, id)`` pairs for every ChargeCode in the database."""
+    try:
+        with open(thymed._CHARGES) as f:
+            codes = json.load(f, object_hook=thymed.object_decoder)
+    except (json.JSONDecodeError, OSError):
+        return []
+    return [
+        (f"{code.id} - {code.name}", str(code.id))
+        for _, code in sorted(codes.items(), key=lambda kv: int(kv[0]))
+    ]
+
+
+class SettingRow(Horizontal):
+    """A single labelled row in the Settings applet."""
+
+    pass
+
+
 class Settings(ScrollableContainer):
-    """View and change various settings relating to Thymed."""
+    """View and change various settings relating to Thymed.
+
+    Changes are saved to the Thymed config file immediately. Data files
+    that don't exist yet are created for you; existing files must be
+    valid Thymed JSON files. Press Enter in a field or hit Apply to save.
+    """
 
     # Info is just a formatted version of the docstring.
     info = (
@@ -360,8 +386,142 @@ class Settings(ScrollableContainer):
 
     @no_type_check
     def compose(self) -> ComposeResult:
-        for _i in range(10):
-            yield Horizontal(Static("A settings switch"), Switch())
+        default = str(thymed.get_setting("database", "default", ""))
+        options = code_options()
+        default_value = default if default in [v for _, v in options] else Select.NULL
+        themes = sorted(self.app.available_themes)
+
+        yield Title("Data Files", classes="setting-title")
+        yield SettingRow(
+            Static("Punch data file:", classes="setting-label"),
+            Input(value=str(thymed._DATA), id="setting_data"),
+            Button("Apply", variant="primary", id="apply_data"),
+        )
+        yield SettingRow(
+            Static("ChargeCode file:", classes="setting-label"),
+            Input(value=str(thymed._CHARGES), id="setting_charges"),
+            Button("Apply", variant="primary", id="apply_charges"),
+        )
+
+        yield Title("Defaults", classes="setting-title")
+        yield SettingRow(
+            Static("Default ChargeCode:", classes="setting-label"),
+            Select(
+                options,
+                value=default_value,
+                prompt="No default",
+                id="setting_default",
+            ),
+        )
+        yield SettingRow(
+            Static("Report export folder:", classes="setting-label"),
+            Input(
+                value=str(thymed.get_setting("reporting", "export_dir", Path.cwd())),
+                id="setting_export",
+            ),
+            Button("Apply", variant="primary", id="apply_export"),
+        )
+
+        yield Title("Appearance", classes="setting-title")
+        yield SettingRow(
+            Static("Theme:", classes="setting-label"),
+            Select(
+                [(name, name) for name in themes],
+                value=self.app.theme,
+                allow_blank=False,
+                id="setting_theme",
+            ),
+        )
+
+        yield Static(
+            f"Config file: {thymed._CONFIG}",
+            classes="setting-note",
+        )
+
+    def apply_data_file(self) -> None:
+        """Switch the punch data file to the one entered."""
+        field = self.query_one("#setting_data", Input)
+        try:
+            new = thymed.set_data_file(field.value)
+        except (ThymedError, OSError) as exc:
+            self.notify(str(exc), title="Settings", severity="error")
+            return
+        field.value = str(new)
+        self.notify(f"Punch data file set to {new}", title="Settings")
+
+    def apply_charges_file(self) -> None:
+        """Switch the ChargeCode file to the one entered."""
+        field = self.query_one("#setting_charges", Input)
+        try:
+            new = thymed.set_charges_file(field.value)
+        except (ThymedError, OSError) as exc:
+            self.notify(str(exc), title="Settings", severity="error")
+            return
+        field.value = str(new)
+        # The available codes probably changed, so refresh the default picker.
+        select = self.query_one("#setting_default", Select)
+        options = code_options()
+        select.set_options(options)
+        default = str(thymed.get_setting("database", "default", ""))
+        if default in [v for _, v in options]:
+            select.value = default
+        self.notify(f"ChargeCode file set to {new}", title="Settings")
+
+    def apply_export_dir(self) -> None:
+        """Set the folder reports are exported to."""
+        field = self.query_one("#setting_export", Input)
+        folder = Path(field.value).expanduser()
+        if folder.exists() and not folder.is_dir():
+            self.notify(
+                f"{folder} is not a folder.", title="Settings", severity="error"
+            )
+            return
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            self.notify(str(exc), title="Settings", severity="error")
+            return
+        folder = folder.resolve()
+        field.value = str(folder)
+        thymed.set_setting("reporting", "export_dir", folder.as_posix())
+        self.notify(f"Reports will export to {folder}", title="Settings")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle the Apply buttons."""
+        actions = {
+            "apply_data": self.apply_data_file,
+            "apply_charges": self.apply_charges_file,
+            "apply_export": self.apply_export_dir,
+        }
+        if event.button.id in actions:
+            event.stop()
+            actions[event.button.id]()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Pressing Enter in a field is the same as hitting Apply."""
+        actions = {
+            "setting_data": self.apply_data_file,
+            "setting_charges": self.apply_charges_file,
+            "setting_export": self.apply_export_dir,
+        }
+        if event.input.id in actions:
+            event.stop()
+            actions[event.input.id]()
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Persist dropdown settings as soon as they change."""
+        if event.select.id == "setting_default":
+            if event.value is Select.NULL:
+                return
+            if str(event.value) != str(thymed.get_setting("database", "default")):
+                thymed.set_default_code(int(event.value))
+                self.notify(
+                    f"Default ChargeCode set to {event.value}", title="Settings"
+                )
+        elif event.select.id == "setting_theme":
+            if event.value != self.app.theme:
+                self.app.theme = str(event.value)
+                thymed.set_setting("tui", "theme", str(event.value))
 
 
 class UnderConstruction(Container):
@@ -380,7 +540,7 @@ class UnderConstruction(Container):
 
     @no_type_check
     def compose(self) -> ComposeResult:
-        yield Title(":hammer_and_wrench: WIP :hammer_and_wrench:")
+        yield Title("🛠 WIP 🛠")
 
 
 class EntryForm(Container):
@@ -621,6 +781,12 @@ class ThymedApp(App[None]):
         yield Header(show_clock=True)
         yield Container(Sidebar(classes="-hidden"), Body())
         yield Footer()
+
+    def on_mount(self) -> None:
+        """Apply persisted appearance settings."""
+        theme = thymed.get_setting("tui", "theme")
+        if theme in self.available_themes:
+            self.theme = theme
 
     def on_ready(self) -> None:
         self.update_clock()
